@@ -1,0 +1,27 @@
+.menu {
+  height: 32px;
+  background-color: lightsteelblue;
+  display: flex;
+  flex-direction: row;
+}
+
+.dialog-frame {
+  position: fixed;
+  left: 0px;
+  right: 0px;
+  top: 0px;
+  bottom: 0px;
+  background-color: rgba(255, 255, 255, 0.7);
+  z-index: 2;
+}
+
+.dialog {
+  position: fixed;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  background-color: white;
+  border-radius: 5px;
+	box-shadow: 0px 0px 2px black;
+  padding: 30px;
+}

@@ -1,29 +1,20 @@
+.item {
+  padding: 10px;
+  border: 1.5px solid;
+  border-radius: 3px;
+  margin: 4px 0px;
+}
+
 .hidden {
-	color: transparent;
-	border-bottom: 1px solid black;
+  color: transparent;
+  caret-color: black;
+  border-bottom: 1px solid black;
 }
 
 .hidden:hover {
-	color: inherit;
+  color: inherit;
 }
 
 .star {
-	outline: 2px solid orange;
-}
-
-.command-group {
-	position: fixed;
-	z-index: 1;
-	border-radius: 6px;
-	box-shadow: 1px 1px 5px black;
-	overflow: hidden;
-}
-
-.command-button {
-	border: none;
-	padding: 10px 15px;
-}
-
-.command-button:hover {
-	background-color: lightgray;
+  outline: 2px solid orange;
 }

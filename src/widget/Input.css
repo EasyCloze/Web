@@ -1,0 +1,11 @@
+.input {
+  display: inline-block;
+  height: 32px;
+  border: 1px solid gray;
+  border-radius: 2px;
+  padding: 0px 8px;
+}
+
+.input:focus {
+  border: 1px solid rgb(96, 94, 92);
+}

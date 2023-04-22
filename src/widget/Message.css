@@ -1,0 +1,6 @@
+.message {
+  display: block;
+  font-size: 0.875em;
+  background-color: rgb(253, 237, 237);
+  padding: 5px;
+}
