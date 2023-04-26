@@ -19,7 +19,7 @@ export default function List({ token, setToken, getMenuRef, setListRef }) {
   let sync_state = useMemo(() => {
     return {
       enabled: false,
-      last_op_time: 0,
+      last_op_time: token ? Date.now() : 0,
       last_sync_time: 0,
       syncing: false,
     }
@@ -29,7 +29,6 @@ export default function List({ token, setToken, getMenuRef, setListRef }) {
     try {
       const response = await fetch(API('/item/sync'), {
         method: 'POST',
-        keepalive: true,
         headers: {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${token}`
@@ -144,8 +143,8 @@ export default function List({ token, setToken, getMenuRef, setListRef }) {
       if (!sync_state.enabled) {
         return;
       }
-      const op_sync_waiting_time = 10 * 1000;
-      const sync_period = 60 * 1000;
+      const op_sync_waiting_time = 60 * 1000;
+      const sync_period = 5 * 60 * 1000;
       const op_time_elapse = Date.now() - sync_state.last_op_time;
       const sync_time_elapse = Date.now() - sync_state.last_sync_time;
       let next_sync;
@@ -172,7 +171,9 @@ export default function List({ token, setToken, getMenuRef, setListRef }) {
   })();
 
   useEffect(() => {
-    if (!token) {
+    if (token) {
+      sync_manager.enable();
+    } else {
       sync_manager.disable();
       setList(list.map(id => {
         const [remote, setRemote] = localJson(key_remote(id));
@@ -192,14 +193,12 @@ export default function List({ token, setToken, getMenuRef, setListRef }) {
         setLocal(null);
         return id;
       }).filter(id => id).sort());
-    } else {
-      sync_manager.enable();
     }
   }, [token]);
 
   function onCreate() {
-    setList([...list, generate_local_id()]);
     sync_manager.op();
+    setList([...list, generate_local_id()]);
   }
 
   function onUpdate() {
