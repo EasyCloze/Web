@@ -1,7 +1,4 @@
-import React, { useEffect, useMemo, useState } from 'react';
-import { ReactEditor, Slate, Editable, withReact, useSlate, useFocused } from 'slate-react';
-import { withHistory } from 'slate-history';
-import { Editor, Transforms, Range, createEditor } from 'slate';
+import React, { useEffect, useState } from 'react';
 import { localJson } from './utility/local';
 import { useLocalRefJson } from './utility/localRef';
 import { useRefGetSet } from './utility/refGetSet';
@@ -12,28 +9,24 @@ import Message from './widget/Message';
 import Label from './widget/Label';
 import Placeholder from './widget/Placeholder';
 import PositionAbsolute from './widget/PositionAbsolute';
-import PositionFixed from './widget/PositionFixed';
+import Editor from './Editor';
 import './Item.css';
 
-function check_val_length(val) {
-  return val.length <= 4096;
-}
-
-export default function Item({ item_map, id, onUpdate }) {
+export default function ({ item_map, id, onUpdate }) {
   const [getRemote, setRemote] = useLocalRefJson(key_remote(id), { ver: 0, val: JSON.stringify([{ children: [{ text: '' }] }]) });
   const [getLocal, setLocal] = useLocalRefJson(key_local(id), { ref: 0, ver: 0, val: null });
   const [getTemp, setTemp] = useRefGetSet({ ver: 0, val: null });
-  const getValue = () => getLocal().val || getRemote().val;
 
-  const editor = useMemo(() => withHistory(withReact(createEditor())), []);
-  const frame = useMemo(() => { return {} }, []);
+  const [getFrameRef, setFrameRef] = useRefGetSet();
+  const [getEditorRef, setEditorRef] = useRefGetSet();
 
   function current_state() {
+    const val_length_limit = 4096;
     const ver_remote = getRemote().ver, { ref, ver, val } = getLocal();
     if (ref === ver_remote) {
       if (ver_remote === 0) {
         if (ver > 0) {
-          if (check_val_length(val)) {
+          if (val.length <= val_length_limit) {
             return 'created';
           } else {
             return 'created invalid';
@@ -50,7 +43,7 @@ export default function Item({ item_map, id, onUpdate }) {
           }
         } else {
           if (ver > 0) {
-            if (check_val_length(val)) {
+            if (val.length <= val_length_limit) {
               return 'updated';
             } else {
               return 'updated invalid';
@@ -74,13 +67,12 @@ export default function Item({ item_map, id, onUpdate }) {
   }
 
   function update_frame_state() {
-    frame.setState(current_state());
+    getFrameRef().setState(current_state());
   }
 
   useEffect(() => {
     if (getLocal().ver === 0) {
-      ReactEditor.focus(editor);
-      Transforms.select(editor, Editor.start(editor, []));
+      getEditorRef().setFocus();
       setLocal({ ref: 0, ver: current_version(), val: getRemote().val });
     }
     update_frame_state();
@@ -101,9 +93,7 @@ export default function Item({ item_map, id, onUpdate }) {
   }
 
   function Revert() {
-    Transforms.delete(editor, { at: { anchor: Editor.start(editor, []), focus: Editor.end(editor, []) } });
-    Transforms.removeNodes(editor, { at: [0] });
-    Transforms.insertNodes(editor, JSON.parse(getRemote().val));
+    getEditorRef().setValue(JSON.parse(getRemote().val));
   }
 
   function DeleteOrRestore() {
@@ -210,47 +200,41 @@ export default function Item({ item_map, id, onUpdate }) {
   });
 
   return (
-    <Slate
-      editor={editor}
-      value={JSON.parse(getValue())}
-      onChange={value => {
-        if (editor.operations.some(op => op.type !== 'set_selection')) {
-          onChange(JSON.stringify(value));
-        }
+    <Frame
+      setFrameRef={setFrameRef}
+      getRemote={getRemote}
+      getLocal={getLocal}
+      command={{
+        Revert,
+        DeleteOrRestore,
+        ConflictDelete,
+        ConflictSetRemote,
+        ConflictSetLocal,
       }}
     >
-      <Frame
-        frame={frame}
-        getRemote={getRemote}
-        getLocal={getLocal}
-        command={{
-          Revert,
-          DeleteOrRestore,
-          ConflictDelete,
-          ConflictSetRemote,
-          ConflictSetLocal,
-        }}
-      >
-        <Editable
-          renderLeaf={props => <TextNode {...props} />}
-          onMouseMove={event => editor.mouse = { x: event.clientX, y: event.clientY }}
-        />
-        <Toolbar />
-      </Frame>
-    </Slate>
+      <Editor
+        setEditorRef={setEditorRef}
+        value={JSON.parse(getLocal().val || getRemote().val)}
+        onChange={value => onChange(JSON.stringify(value))}
+        onFocusChange={focused => getFrameRef().setFocused(focused)}
+      />
+    </Frame>
   )
 }
 
-const Frame = ({ frame, getRemote, getLocal, children, command }) => {
-  const focused = useFocused()
+const Frame = ({ setFrameRef, getRemote, getLocal, children, command }) => {
+  const [focused, setFocused] = useState(false);
   const [state, setState] = useState('normal');
 
-  frame['setState'] = setState;
+  setFrameRef({
+    setFocused,
+    setState,
+  });
 
   function current_border_color() {
     switch (state) {
       case 'normal':
-        return focused ? 'orange' : 'lightgray';
+        return focused ? 'orange' : 'lightsteelblue';
       case 'created':
       case 'updated':
         return focused ? 'orange' : 'green';
@@ -266,147 +250,148 @@ const Frame = ({ frame, getRemote, getLocal, children, command }) => {
     }
   }
 
-  function current_children() {
-    const CommandBar = ({ children }) => {
-      return (
-        <PositionAbsolute left='20px' bottom='20px' onMouseDown={event => event.preventDefault()}>
-          {children}
-        </PositionAbsolute>
-      )
+  const MessageBar = () => {
+    function current_message() {
+      switch (state) {
+        case 'normal':
+        case 'created':
+        case 'updated':
+          return null;
+        case 'created invalid':
+        case 'updated invalid':
+          return 'item.error.overlength.message';
+        case 'deleted normal':
+        case 'deleted created':
+        case 'deleted updated':
+          return 'item.deleted.message';
+        case 'conflict deleted':
+          return 'item.conflict.deleted.message';
+        case 'conflict updated':
+          return 'item.conflict.updated.message';
+        case 'conflict missing':
+          return 'item.conflict.missing.message';
+      }
     }
 
-    const DiffView = ({ children }) => {
-      const editor = useMemo(() => withReact(createEditor()), []);
-      return (
-        <React.Fragment>
-          {
-            getRemote().ver > 0
-            &&
-            <React.Fragment>
-              <Label text={get_version_date(getRemote().ver) + ' remote (readonly)'} />
-              <div style={{
-                border: '1px solid',
-                borderRadius: '2px',
-                borderColor: 'lightgray',
-                padding: '5px'
-              }}>
-                <Slate
-                  editor={editor}
-                  value={JSON.parse(getRemote().val)}
-                >
-                  <Editable
-                    readOnly={true}
-                    renderLeaf={props => <TextNode {...props} />}
-                  />
-                </Slate>
-              </div>
-            </React.Fragment>
-          }
-          {
-            <React.Fragment>
-              <Label text={get_version_date(Math.abs(getLocal().ver)) + ' local'} />
-              <div style={{
-                border: '1px solid',
-                borderRadius: '2px',
-                borderColor: focused ? 'orange' : 'lightgray',
-                padding: '5px',
-              }}>
-                {children}
-              </div>
-            </React.Fragment>
-          }
-          <Placeholder height='5px' />
-        </React.Fragment>
-      )
+    let text_id = current_message();
+    if (!text_id) {
+      return null;
     }
 
+    return (
+      <React.Fragment>
+        <Message><Text id={text_id} /></Message>
+        <Placeholder height='5px' />
+      </React.Fragment>
+    )
+  }
+
+  function current_content() {
     switch (state) {
       case 'normal':
-        return (
-          <React.Fragment>
-            {children}
-            {focused && (
-              <CommandBar>
-                <Button text='delete' onClick={command.DeleteOrRestore} />
-              </CommandBar>
-            )}
-          </React.Fragment>
-        );
       case 'created':
       case 'updated':
-        return (
-          <React.Fragment>
-            {children}
-            {focused && (
-              <CommandBar>
-                <Button text='delete' onClick={command.DeleteOrRestore} />
-                <Placeholder width='10px' />
-                <Button text='revert change' onClick={command.Revert} />
-              </CommandBar>
-            )}
-          </React.Fragment>
-        );
       case 'created invalid':
       case 'updated invalid':
-        return (
-          <React.Fragment>
-            <Message text='This item is too long.' />
-            <Placeholder height='5px' />
-            {children}
-            {focused && (
-              <CommandBar>
-                <Button text='delete' onClick={command.DeleteOrRestore} />
-                <Placeholder width='10px' />
-                <Button text='revert change' onClick={command.Revert} />
-              </CommandBar>
-            )}
-          </React.Fragment>
-        );
+      case 'conflict missing':
+        return children;
       case 'deleted normal':
       case 'deleted created':
       case 'deleted updated':
-        return (
-          <React.Fragment>
-            <Message text='This item has been deleted.' />
-            <Placeholder height='5px' />
-            <Button text='restore' onClick={command.DeleteOrRestore} />
-          </React.Fragment>
-        );
+        return null;
       case 'conflict deleted':
-        return (
-          <React.Fragment>
-            <Message text='Conflict: This item was updated on remote, but deleted on local.' />
-            <DiffView>{children}</DiffView>
-            <Button text='delete' onClick={command.ConflictDelete} />
-            <Placeholder width='2px' />
-            <Button text='keep remote' onClick={command.ConflictSetRemote} />
-            <Placeholder width='2px' />
-            <Button text='keep local' onClick={command.ConflictSetLocal} />
-          </React.Fragment>
-        );
       case 'conflict updated':
         return (
           <React.Fragment>
-            <Message text='Conflict: This item was updated on both remote and local.' />
-            <DiffView>{children}</DiffView>
-            <Button text='delete' onClick={command.ConflictDelete} />
-            <Placeholder width='2px' />
-            <Button text='keep remote' onClick={command.ConflictSetRemote} />
-            <Placeholder width='2px' />
-            <Button text='keep local' onClick={command.ConflictSetLocal} />
+            <Label>{get_version_date(getRemote().ver)}<Text id='item.conflict.remote.text' /></Label>
+            <div className='item-diff-frame'>
+              <Editor readOnly value={JSON.parse(getRemote().val)} />
+            </div>
+            <Label>{get_version_date(Math.abs(getLocal().ver))}<Text id='item.conflict.local.text' /></Label>
+            <div className='item-diff-frame'>
+              {children}
+            </div>
+            <Placeholder height='5px' />
           </React.Fragment>
-        );
-      case 'conflict missing':
+        )
+    }
+  }
+
+  function current_action_group() {
+    switch (state) {
+      case 'normal':
+      case 'created':
+      case 'updated':
+      case 'created invalid':
+      case 'updated invalid':
+        return null;
+      case 'deleted normal':
+      case 'deleted created':
+      case 'deleted updated':
+        return <Button onClick={command.DeleteOrRestore} ><Text id='item.action.restore.button' /></Button>
+      case 'conflict deleted':
+      case 'conflict updated':
         return (
           <React.Fragment>
-            <Message text='Conflict: This item was deleted on remote, but updated on local.' />
-            <DiffView>{children}</DiffView>
-            <Button text='remove from list' onClick={command.ConflictDelete} />
+            <Button onClick={command.ConflictSetRemote} ><Text id='item.action.keep_remote.button' /></Button>
             <Placeholder width='2px' />
-            <Button text='create a new item' onClick={command.ConflictSetLocal} />
+            <Button onClick={command.ConflictSetLocal} ><Text id='item.action.keep_local.button' /></Button>
           </React.Fragment>
-        );
+        )
+      case 'conflict missing':
+        return <Button onClick={command.ConflictSetLocal} ><Text id='item.action.create.button' /></Button>
     }
+  }
+
+  const CommandBar = () => {
+    if (!focused) {
+      return null;
+    }
+
+    function current_commands() {
+      switch (state) {
+        case 'normal':
+          return (
+            <React.Fragment>
+              <Button onClick={command.DeleteOrRestore} ><Text id='item.command.delete.button' /></Button>
+            </React.Fragment>
+          )
+        case 'conflict deleted':
+        case 'conflict updated':
+        case 'conflict missing':
+          return (
+            <React.Fragment>
+              <Button onClick={command.ConflictDelete} ><Text id='item.command.delete.button' /></Button>
+            </React.Fragment>
+          )
+        case 'created':
+        case 'updated':
+        case 'created invalid':
+        case 'updated invalid':
+          return (
+            <React.Fragment>
+              <Button onClick={command.DeleteOrRestore} ><Text id='item.command.delete.button' /></Button>
+              <Placeholder width='10px' />
+              <Button onClick={command.Revert} ><Text id='item.command.revert.button' /></Button>
+            </React.Fragment>
+          )
+        case 'deleted normal':
+        case 'deleted created':
+        case 'deleted updated':
+          return null;
+      }
+    }
+
+    let commands = current_commands();
+    if (!commands) {
+      return null;
+    }
+
+    return (
+      <PositionAbsolute left='20px' bottom='20px' onMouseDown={event => event.preventDefault()}>
+        {commands}
+      </PositionAbsolute>
+    )
   }
 
   return (
@@ -414,96 +399,10 @@ const Frame = ({ frame, getRemote, getLocal, children, command }) => {
       className={'item'}
       style={{ borderColor: current_border_color() }}
     >
-      {current_children()}
+      <MessageBar />
+      {current_content()}
+      {current_action_group()}
+      <CommandBar />
     </div>
   )
-}
-
-const Toolbar = () => {
-  const editor = useSlate();
-  const focused = useFocused();
-  const { selection } = editor;
-  const [first, next] = Editor.nodes(editor, { match: node => Object.hasOwn(node, 'star'), mode: 'all' });
-
-  if (!focused || !selection || !first && (Range.isCollapsed(selection) || Editor.string(editor, selection) === '')) {
-    return null;
-  }
-
-  const hide = () => {
-    Transforms.setNodes(
-      editor,
-      { star: false },
-      { match: () => true, split: true }
-    );
-  }
-
-  const star = () => {
-    Transforms.setNodes(
-      editor,
-      { star: true },
-      { match: () => true, split: true }
-    );
-  }
-
-  const star_all = () => {
-    Transforms.setNodes(
-      editor,
-      { star: true },
-      { match: node => Object.hasOwn(node, 'star') }
-    );
-  }
-
-  const unstar_all = () => {
-    Transforms.setNodes(
-      editor,
-      { star: false },
-      { match: node => Object.hasOwn(node, 'star') }
-    );
-  }
-
-  const show_all = () => {
-    Transforms.unsetNodes(
-      editor,
-      'star',
-      { match: () => true }
-    );
-  }
-
-  return (
-    <PositionFixed left={editor.mouse.x + 20 + 'px'} top={editor.mouse.y + 20 + 'px'} onMouseDown={event => event.preventDefault()}>
-      {
-        !first ? (
-          <React.Fragment>
-            <Button text='hide' onClick={hide} />
-            <Placeholder width='2px' />
-            <Button text='star' onClick={star} />
-          </React.Fragment>
-        ) : !next ? (
-          <React.Fragment>
-            {
-              !first.at(0).star ? (
-                <Button text='star' onClick={star_all} />
-              ) : (
-                <Button text='unstar' onClick={unstar_all} />
-              )
-            }
-            <Placeholder width='2px' />
-            <Button text='show' onClick={show_all} />
-          </React.Fragment>
-        ) : (
-          <React.Fragment>
-            <Button text='star' onClick={star_all} />
-            <Placeholder width='2px' />
-            <Button text='unstar' onClick={unstar_all} />
-            <Placeholder width='2px' />
-            <Button text='show' onClick={show_all} />
-          </React.Fragment>
-        )
-      }
-    </PositionFixed>
-  )
-}
-
-const TextNode = ({ attributes, children, text }) => {
-  return <span {...attributes} className={Object.hasOwn(text, 'star') ? ('hidden' + (text.star ? ' star' : '')) : ''}>{children}</span>
 }

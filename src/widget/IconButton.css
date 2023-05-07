@@ -1,0 +1,14 @@
+.icon-button {
+  display: inline-block;
+  border: none;
+  background-color: transparent;
+  padding: 3px 5px;
+}
+
+.icon-button:hover {
+  background-color: rgba(0, 0, 0, 0.1);
+}
+
+.icon-button:active {
+  background-color: rgba(0, 0, 0, 0.2);
+}

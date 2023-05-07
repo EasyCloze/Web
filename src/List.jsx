@@ -1,10 +1,14 @@
-import { useEffect, useMemo } from 'react';
+import { useEffect, useState } from 'react';
+import Tooltip from '@mui/material/Tooltip';
+import IconButton from '@mui/material/IconButton';
+import AddIcon from '@mui/icons-material/Add';
 import { localJson } from './utility/local';
 import { useLocalStateJson } from './utility/localState';
+import { useRefGetSet } from './utility/refGetSet';
+import { useRefObj } from './utility/refObj';
 import { generate_local_id, key_remote, key_local } from './utility/id';
 import API from './utility/api';
 import Text from './lang/Text';
-import Button from './widget/Button';
 import Message from './widget/Message';
 import Placeholder from './widget/Placeholder';
 import PositionAbsolute from './widget/PositionAbsolute';
@@ -15,15 +19,16 @@ import './List.css';
 export default function List({ token, setToken, getMenuRef, setListRef }) {
   const max_list_length = 10;
   const [list, setList] = useLocalStateJson('list', []);
-  let item_map = useMemo(() => new Map(), []);
-  let sync_state = useMemo(() => {
+  const [getErrorRef, setErrorRef] = useRefGetSet();
+  const item_map = useRefObj(() => new Map());
+  const sync_state = useRefObj(() => {
     return {
       enabled: false,
-      last_op_time: token ? Date.now() : 0,
+      last_op_time: 0,
       last_sync_time: 0,
       syncing: false,
     }
-  }, []);
+  });
 
   async function sync_fetch(token, body) {
     try {
@@ -35,14 +40,18 @@ export default function List({ token, setToken, getMenuRef, setListRef }) {
         },
         body: JSON.stringify(body),
       });
-
       if (response.status !== 200) {
-        setToken(null);
+        switch (response.status) {
+          case 404: setToken(null); break;
+          case 429: getErrorRef().setError('list.error.limit.sync.message'); break;
+          default: throw new Error();
+        }
         return null;
+      } else {
+        return await response.json();
       }
-
-      return await response.json();
     } catch (error) {
+      getMenuRef().onSync(false);
       return null;
     }
   }
@@ -59,7 +68,6 @@ export default function List({ token, setToken, getMenuRef, setListRef }) {
 
     const remote = await sync_fetch(token, local);
     if (!remote) {
-      getMenuRef().onSync(false);
       return;
     }
     if (!sync_state.enabled) {
@@ -69,12 +77,13 @@ export default function List({ token, setToken, getMenuRef, setListRef }) {
     let set_delete = new Set();
     let list_add = [];
 
-    function onRemove(id) {
-      set_delete.add(id);
-    }
-
     function onAdd(id_new) {
       list_add.push(id_new);
+    }
+
+    function onRemove(id) {
+      set_delete.add(id);
+      item_map.delete(id);
     }
 
     function onMove(id, id_new) {
@@ -158,7 +167,9 @@ export default function List({ token, setToken, getMenuRef, setListRef }) {
     }
 
     async function op() {
-      sync_state.last_op_time = Date.now();
+      if (sync_state.enabled) {
+        sync_state.last_op_time = Date.now();
+      }
     }
 
     return {
@@ -177,7 +188,11 @@ export default function List({ token, setToken, getMenuRef, setListRef }) {
       sync_manager.disable();
       setList(list.map(id => {
         const [remote, setRemote] = localJson(key_remote(id));
-        const [{ ver, val }, setLocal] = localJson(key_local(id));
+        const [local, setLocal] = localJson(key_local(id));
+        if (!local) {
+          return;
+        }
+        const { ver, val } = local;
         if (ver > 0 && val) {
           if (!remote) {
             return id;
@@ -209,17 +224,42 @@ export default function List({ token, setToken, getMenuRef, setListRef }) {
     sync: () => sync_manager.do_sync()
   });
 
+  const Error = () => {
+    const error_display_time = 10 * 1000;
+    const [error, setError] = useState(null);
+
+    useEffect(() => {
+      setTimeout(() => {
+        setError(null);
+      }, error_display_time);
+    });
+
+    setErrorRef({
+      setError
+    });
+
+    if (!error) {
+      return null;
+    }
+
+    return (
+      <PositionSticky top='0px'>
+        <Placeholder height='10px' />
+        <Message><Text id={error} /></Message>
+        <Placeholder height='5px' />
+      </PositionSticky>
+    )
+  }
+
+  useEffect(() => {
+    if (list.length > max_list_length) {
+      getErrorRef().setError('list.error.overlength.message');
+    }
+  });
+
   return (
     <div className='list'>
-      {
-        list.length > max_list_length
-        &&
-        <PositionSticky top='0px'>
-          <Placeholder height='10px' />
-          <Message text='You can create at most 10 items. The remaining items will not be synced.' />
-          <Placeholder height='5px' />
-        </PositionSticky>
-      }
+      <Error />
       {
         list.map(id => (
           <Item
@@ -231,7 +271,11 @@ export default function List({ token, setToken, getMenuRef, setListRef }) {
         ))
       }
       <PositionAbsolute right='20px' bottom='20px'>
-        <Button text='create' onClick={onCreate} />
+        <Tooltip title={<Text id='list.create.tooltip' />}>
+          <IconButton onClick={onCreate} >
+            <AddIcon />
+          </IconButton>
+        </Tooltip>
       </PositionAbsolute>
     </div>
   )

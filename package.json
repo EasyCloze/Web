@@ -6,12 +6,13 @@
     "preview": "vite preview"
   },
   "devDependencies": {
+    "@mui/icons-material": "^5.11.16",
+    "@mui/material": "^5.12.3",
     "@types/crypto-js": "^4.1.1",
     "@types/react": "^18.0.38",
     "@types/react-dom": "^18.0.11",
     "@vitejs/plugin-react-swc": "^3.3.0",
     "crypto-js": "^4.1.1",
-    "jwt-decode": "^3.1.2",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
     "slate": "^0.93.0",

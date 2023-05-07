@@ -1,5 +1,5 @@
-import './Button.css'
+import './Button.css';
 
-export default function ({ text, ...props }) {
-  return <button type="submit" className="button" {...props}>{text}</button>
+export default function ({ children, ...props }) {
+  return <button type="submit" className="button" {...props}>{children}</button>
 }

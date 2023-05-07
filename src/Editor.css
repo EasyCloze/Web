@@ -1,0 +1,13 @@
+.hidden {
+  color: transparent;
+  caret-color: black;
+  border-bottom: 1px solid black;
+}
+
+.hidden:hover {
+  color: inherit;
+}
+
+.mark {
+  outline: 2px solid orange;
+}

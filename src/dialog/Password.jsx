@@ -1,40 +1,44 @@
-import { useState } from 'react';
 import { hash } from '../utility/hash'
 import API from '../utility/api';
 import Text from '../lang/Text';
-import Message from '../widget/Message';
 import Label from '../widget/Label';
 import Input from '../widget/Input';
-import ButtonSubmit from '../widget/ButtonSubmit';
 import Placeholder from '../widget/Placeholder';
-import jwt_decode from 'jwt-decode';
+import ButtonSubmit from '../widget/ButtonSubmit';
 
-export default function Password({ token, setDialog }) {
-  const [error, setError] = useState(null);
+export default function Password({ setError, token, setToken, user, setDialog }) {
   return (
     <form onSubmit={async event => {
       event.preventDefault();
-      const user = jwt_decode(token).user, pass = event.target.pass.value;
-      const response = await fetch(API('/user/password'), {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
-        },
-        body: JSON.stringify({ pass: hash(user, pass) }),
-      });
-      if (response.status !== 200) {
-        setError(await response.text());
-      } else {
-        setDialog('');
+      const pass = event.target.pass.value;
+      try {
+        const response = await fetch(API('/user/password'), {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`
+          },
+          body: JSON.stringify({ pass: hash(user, pass) }),
+        });
+        if (response.status !== 200) {
+          switch (response.status) {
+            case 404: setToken(null); break;
+            case 429: setError('dialog.error.limit.change_password.message'); break;
+            default: throw new Error();
+          }
+        } else {
+          setDialog(null);
+        }
+      } catch (error) {
+        setError('dialog.error.unknown.message');
       }
     }}>
-      <Label text='Change your password' />
-      {error && <Message text={error} />}
-      <Label text='password' />
+      <Label><Text id='dialog.change_password.text' /></Label>
+      <Placeholder height='10px' />
+      <Label><Text id='dialog.change_password.new_password.text' /></Label>
       <Input type="password" name="pass" required />
       <Placeholder height='10px' />
-      <ButtonSubmit text='submit' />
+      <ButtonSubmit><Text id='dialog.change_password.button' /></ButtonSubmit>
     </form>
   )
 }

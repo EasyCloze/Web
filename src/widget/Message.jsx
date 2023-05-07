@@ -1,5 +1,5 @@
-import './Message.css'
+import './Message.css';
 
-export default function ({ text }) {
-  return <div className='message'>{text}</div>
+export default function ({ children }) {
+  return <div className='message'>{children}</div>
 }

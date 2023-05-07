@@ -1,13 +1,15 @@
-export default function ({ left, top, right, bottom, children, ...props }) {
+export default function ({ zIndex = 1, left, top, right, bottom, width, height, children, ...props }) {
   return (
     <div
       style={{
         position: 'absolute',
-        zIndex: 1,
+        zIndex,
         left,
         top,
         right,
-        bottom
+        bottom,
+        width,
+        height,
       }}
       {...props}
     >

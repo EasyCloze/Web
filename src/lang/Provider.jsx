@@ -1,6 +1,6 @@
+import { useLocalState } from '../utility/localState';
 import LanguageContext from './context';
 import dict from './dict';
-import { useLocalState } from '../utility/localState';
 
 export default function LanguageProvider({ children }) {
   const [lang, setLang] = useLocalState('lang');

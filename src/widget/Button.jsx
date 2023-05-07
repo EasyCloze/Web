@@ -1,5 +1,5 @@
-import './Button.css'
+import './Button.css';
 
-export default function ({ text, onClick, ...props }) {
-  return <button type="button" className="button" onClick={onClick} {...props}>{text}</button>
+export default function ({ onClick, children, ...props }) {
+  return <button type="button" className="button" onClick={onClick} {...props}>{children}</button>
 }

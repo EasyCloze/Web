@@ -1,46 +1,46 @@
-import { useState } from 'react';
-import { hash } from '../utility/hash'
-import API from '../utility/api'
+import { hash } from '../utility/hash';
+import API from '../utility/api';
 import Text from '../lang/Text';
-import Message from '../widget/Message';
 import Label from '../widget/Label';
 import Input from '../widget/Input';
-import ButtonSubmit from '../widget/ButtonSubmit';
 import Placeholder from '../widget/Placeholder';
+import ButtonSubmit from '../widget/ButtonSubmit';
 
-export default function Signup({ setDialog }) {
-  const [error, setError] = useState('');
+export default function Signup({ setError, setDialog }) {
   return (
     <form onSubmit={async event => {
       event.preventDefault();
       const user = event.target.user.value, pass = event.target.pass.value;
       if (user.length < 6 || user.length > 30) {
-        setError('username should be between 6 and 30 characters');
+        setError('dialog.error.invalid_username.message');
         return;
       }
       setError(null);
-      const response = await fetch(API('/user/signup'), {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ user, pass: hash(user, pass) }),
-      });
-      if (response.status !== 200) {
-        switch (response.status) {
-          case 400: setError(await response.text()); break;  // invalid username or password format
-          case 409: setError(await response.text()); break;  // user already exists
-          default: setError('unknown error'); break;
+      try {
+        const response = await fetch(API('/user/signup'), {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ user, pass: hash(user, pass) }),
+        });
+        if (response.status !== 200) {
+          switch (response.status) {
+            case 409: setError('dialog.error.unavailable_username.message'); break;
+            case 429: setError('dialog.error.limit.signup.message'); break;
+            default: throw new Error();
+          }
+        } else {
+          setDialog('login');
         }
-      } else {
-        setDialog('login');
+      } catch (error) {
+        setError('dialog.error.unknown.message');
       }
     }}>
-      {error && <Message text={error} />}
-      <Label text='username' />
+      <Label><Text id='dialog.username.text' /></Label>
       <Input type="text" name="user" required />
-      <Label text='password' />
+      <Label><Text id='dialog.password.text' /></Label>
       <Input type="password" name="pass" required />
       <Placeholder height='10px' />
-      <ButtonSubmit text='sign up' />
+      <ButtonSubmit><Text id='menu.signup.button' /></ButtonSubmit>
     </form>
   )
 }

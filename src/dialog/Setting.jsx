@@ -1,24 +1,24 @@
 import React from 'react';
-import jwt_decode from 'jwt-decode';
-import LangSelect from '../lang/Select';
 import Text from '../lang/Text';
+import Placeholder from '../widget/Placeholder';
 import Button from '../widget/Button';
+import LangSelect from '../lang/Select';
 
-export default function Setting({ token, setDialog, setToken }) {
+export default function Setting({ token, setToken, user, setDialog }) {
   return (
     <React.Fragment>
       {
-        token ? (
+        token && (
           <React.Fragment>
-            {'Hello! ' + jwt_decode(token).user}
-            <Button text='logout' onClick={() => { setToken('') }} />
-            <Button text='change password' onClick={() => { setDialog('password') }} />
-            <Button text='delete account' onClick={() => setDialog('delete')} />
-          </React.Fragment>
-        ) : (
-          <React.Fragment>
-            You are not logged in
-            <Button text='login' onClick={() => { setDialog('login') }} />
+            <Text id='dialog.setting.welcome.text' />
+            {user}
+            <Placeholder height='5px' />
+            <Button onClick={() => { setToken(null); setDialog(null); }} ><Text id='dialog.setting.logout.button' /></Button>
+            <Placeholder height='2px' />
+            <Button onClick={() => { setDialog('password'); }} ><Text id='dialog.setting.change_password.button' /></Button>
+            <Placeholder height='2px' />
+            <Button onClick={() => { setDialog('delete'); }} ><Text id='dialog.setting.delete_account.button' /></Button>
+            <Placeholder height='10px' />
           </React.Fragment>
         )
       }

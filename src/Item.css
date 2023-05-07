@@ -5,16 +5,9 @@
   margin: 4px 0px;
 }
 
-.hidden {
-  color: transparent;
-  caret-color: black;
-  border-bottom: 1px solid black;
-}
-
-.hidden:hover {
-  color: inherit;
-}
-
-.star {
-  outline: 2px solid orange;
+.item-diff-frame {
+  border: 1px solid;
+  border-radius: 2px;
+  border-color: lightgray;
+  padding: 5px;
 }
