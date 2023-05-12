@@ -22,12 +22,12 @@ import './Menu.css';
 export default function Menu({ token, setToken, setMenuRef, getListRef }) {
   const [getUser, setUser] = useLocalRef('user');
   const [time, setTime] = useLocalState('lastSyncTime');
+  const [online, setOnline] = useLocalState('online');
   const [syncing, setSyncing] = useState(false);
   const [dialog, setDialog] = useState('');
-  const [connection, setConnection] = useState(true);
 
   setMenuRef({
-    onSync: succeeded => { succeeded ? (setTime(new Date().toLocaleString()), setConnection(true)) : setConnection(false) },
+    onSync: succeeded => { succeeded ? (setTime(new Date().toLocaleString()), setOnline(true)) : setOnline(false) },
     setSyncing
   });
 
@@ -67,7 +67,7 @@ export default function Menu({ token, setToken, setMenuRef, getListRef }) {
   }
 
   return (
-    <div style={{ userSelect: 'none' }}>
+    <div>
       <AppBar position='static'>
         <Toolbar variant='dense' className='menu'>
           <Tooltip title={<Text id='menu.setting.tooltip' />}>
@@ -85,8 +85,8 @@ export default function Menu({ token, setToken, setMenuRef, getListRef }) {
                 </React.Fragment>
               ) : (
                 <React.Fragment>
-                  <Tooltip title={<Text id={connection ? 'menu.online.tooltip' : 'menu.offline.tooltip'} />}>
-                    <div style={{ backgroundColor: connection ? 'mediumseagreen' : 'lightcoral', borderRadius: '50%', width: '15px', height: '15px' }}></div>
+                  <Tooltip title={<Text id={online ? 'menu.online.tooltip' : 'menu.offline.tooltip'} />}>
+                    <div style={{ backgroundColor: online ? 'mediumseagreen' : 'lightcoral', borderRadius: '50%', width: '15px', height: '15px' }}></div>
                   </Tooltip>
                   <Placeholder width='10px' />
                   <span>{time}</span>

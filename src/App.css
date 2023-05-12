@@ -1,5 +1,15 @@
-.app {
+body {
   position: fixed;
+  margin: 0px;
+  left: 0px;
+  top: 0px;
+  right: 0px;
+  bottom: 0px;
+  user-select: none;
+}
+
+.app {
+  position: absolute;
   left: 0px;
   top: 0px;
   right: 0px;

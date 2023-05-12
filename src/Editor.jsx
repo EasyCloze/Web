@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo } from 'react';
+import React, { useEffect, useMemo, useRef } from 'react';
 import { Slate, ReactEditor, Editable, withReact, useSlate, useFocused } from 'slate-react';
 import { withHistory } from 'slate-history';
 import { Editor, Transforms, Range, createEditor } from 'slate';
@@ -70,10 +70,25 @@ const TextNode = ({ attributes, children, text }) => {
 }
 
 const Toolbar = () => {
+  const ref = useRef();
   const editor = useSlate();
   const focused = useFocused();
   const { selection } = editor;
   const [first, next] = Editor.nodes(editor, { match: node => Object.hasOwn(node, 'mark'), mode: 'all' });
+
+  useEffect(() => {
+    if (!ref || !ref.current) {
+      return;
+    }
+    const rect = ref.current.getBoundingClientRect();
+    const body_rect = document.body.getBoundingClientRect();
+    if (rect.right > body_rect.right) {
+      ref.current.style.left = Math.max(0, body_rect.width - rect.width) + 'px';
+    }
+    if (rect.bottom > body_rect.bottom) {
+      ref.current.style.top = Math.max(0, body_rect.height - rect.height) + 'px';
+    }
+  });
 
   if (!focused || !selection || !first && (Range.isCollapsed(selection) || !Editor.string(editor, selection))) {
     return null;
@@ -120,7 +135,13 @@ const Toolbar = () => {
   }
 
   return (
-    <PositionFixed left={editor.mouse.x + 20 + 'px'} top={editor.mouse.y + 20 + 'px'} onMouseDown={event => event.preventDefault()}>
+    <PositionFixed
+      innerRef={ref}
+      left={editor.mouse.x + 20 + 'px'}
+      top={editor.mouse.y + 20 + 'px'}
+      style={{ display: 'flex' }}
+      onMouseDown={event => event.preventDefault()}
+    >
       {
         !first ? (
           <React.Fragment>
