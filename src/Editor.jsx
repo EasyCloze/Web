@@ -5,7 +5,7 @@ import { Editor, Transforms, Range, createEditor } from 'slate';
 import Text from './lang/Text';
 import Button from './widget/Button';
 import Placeholder from './widget/Placeholder';
-import PositionFixed from './widget/PositionFixed';
+import PositionAbsolute from './widget/PositionAbsolute';
 import './Editor.css';
 
 export default function ({ readonly, setEditorRef, value, onChange, onFocusChange }) {
@@ -77,17 +77,15 @@ const Toolbar = () => {
   const [first, next] = Editor.nodes(editor, { match: node => Object.hasOwn(node, 'mark'), mode: 'all' });
 
   useEffect(() => {
-    if (!ref || !ref.current) {
+    if (!ref.current) {
       return;
     }
     const rect = ref.current.getBoundingClientRect();
     const body_rect = document.body.getBoundingClientRect();
-    if (rect.right > body_rect.right) {
-      ref.current.style.left = Math.max(0, body_rect.width - rect.width) + 'px';
-    }
-    if (rect.bottom > body_rect.bottom) {
-      ref.current.style.top = Math.max(0, body_rect.height - rect.height) + 'px';
-    }
+    const parent_rect = ref.current.offsetParent.getBoundingClientRect();
+    ref.current.style.left = Math.max(0, Math.min(editor.mouse.x + 20 - body_rect.left, body_rect.width - rect.width)) - (parent_rect.left - body_rect.left) + 'px';
+    ref.current.style.top = Math.max(0, Math.min(editor.mouse.y + 20 - body_rect.top, body_rect.height - rect.height)) - (parent_rect.top - body_rect.top) + 'px';
+    ref.current.style.visibility = 'visible';
   });
 
   if (!focused || !selection || !first && (Range.isCollapsed(selection) || !Editor.string(editor, selection))) {
@@ -135,11 +133,9 @@ const Toolbar = () => {
   }
 
   return (
-    <PositionFixed
+    <PositionAbsolute
       innerRef={ref}
-      left={editor.mouse.x + 20 + 'px'}
-      top={editor.mouse.y + 20 + 'px'}
-      style={{ display: 'flex' }}
+      style={{ display: 'flex', visibility: 'hidden' }}
       onMouseDown={event => event.preventDefault()}
     >
       {
@@ -171,6 +167,6 @@ const Toolbar = () => {
           </React.Fragment>
         )
       }
-    </PositionFixed>
+    </PositionAbsolute>
   )
 }

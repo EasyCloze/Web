@@ -20,6 +20,7 @@ export default function App() {
     }
     visualViewport.addEventListener('resize', updatePosition);
     visualViewport.addEventListener('scroll', updatePosition);
+    updatePosition();
   }, []);
 
   return (

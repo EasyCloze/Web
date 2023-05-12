@@ -7,7 +7,7 @@
 }
 
 .dialog-frame {
-  position: fixed;
+  position: absolute;
   left: 0px;
   right: 0px;
   top: 0px;
@@ -17,12 +17,12 @@
 }
 
 .dialog {
-  position: fixed;
+  position: absolute;
   left: 50%;
   top: 50%;
   transform: translate(-50%, -50%);
   background-color: white;
   border-radius: 5px;
-	box-shadow: 0px 0px 2px black;
+  box-shadow: 0px 0px 2px black;
   padding: 30px;
 }
