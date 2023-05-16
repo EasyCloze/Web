@@ -18,6 +18,7 @@ import './List.css';
 
 export default function List({ token, setToken, getMenuRef, setListRef }) {
   const max_list_length = 10;
+  const min_sync_interval = 15 * 1000;
   const [list, setList] = useLocalStateJson('list', []);
   const [getErrorRef, setErrorRef] = useRefGetSet();
   const item_map = useRefObj(() => new Map());
@@ -48,6 +49,7 @@ export default function List({ token, setToken, getMenuRef, setListRef }) {
         }
         return null;
       } else {
+        getErrorRef().setError(null);
         return await response.json();
       }
     } catch (error) {
@@ -138,6 +140,10 @@ export default function List({ token, setToken, getMenuRef, setListRef }) {
       }
       if (!token) {
         sync_manager.disable();
+        return;
+      }
+      if (Date.now() < getMenuRef().time + min_sync_interval) {
+        getErrorRef().setError('list.error.limit.sync.message');
         return;
       }
       sync_state.last_sync_time = Date.now();
@@ -252,7 +258,7 @@ export default function List({ token, setToken, getMenuRef, setListRef }) {
   }
 
   useEffect(() => {
-    if (list.length > max_list_length) {
+    if (token && list.length > max_list_length) {
       getErrorRef().setError('list.error.overlength.message');
     }
   });

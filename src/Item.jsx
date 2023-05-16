@@ -294,11 +294,10 @@ const Frame = ({ setFrameRef, getRemote, getLocal, children, command }) => {
       case 'created invalid':
       case 'updated invalid':
       case 'conflict missing':
-        return children;
       case 'deleted normal':
       case 'deleted created':
       case 'deleted updated':
-        return null;
+        return children;
       case 'conflict deleted':
       case 'conflict updated':
         return (
@@ -311,36 +310,49 @@ const Frame = ({ setFrameRef, getRemote, getLocal, children, command }) => {
             <div className='item-diff-frame'>
               {children}
             </div>
-            <Placeholder height='5px' />
           </React.Fragment>
         )
     }
   }
 
-  function current_action_group() {
-    switch (state) {
-      case 'normal':
-      case 'created':
-      case 'updated':
-      case 'created invalid':
-      case 'updated invalid':
-        return null;
-      case 'deleted normal':
-      case 'deleted created':
-      case 'deleted updated':
-        return <Button onClick={command.DeleteOrRestore} ><Text id='item.action.restore.button' /></Button>
-      case 'conflict deleted':
-      case 'conflict updated':
-        return (
-          <React.Fragment>
-            <Button onClick={command.ConflictSetRemote} ><Text id='item.action.keep_remote.button' /></Button>
-            <Placeholder width='2px' />
-            <Button onClick={command.ConflictSetLocal} ><Text id='item.action.keep_local.button' /></Button>
-          </React.Fragment>
-        )
-      case 'conflict missing':
-        return <Button onClick={command.ConflictSetLocal} ><Text id='item.action.create.button' /></Button>
+  function ActionBar() {
+    function current_actions() {
+      switch (state) {
+        case 'normal':
+        case 'created':
+        case 'updated':
+        case 'created invalid':
+        case 'updated invalid':
+          return null;
+        case 'deleted normal':
+        case 'deleted created':
+        case 'deleted updated':
+          return <Button onClick={command.DeleteOrRestore} ><Text id='item.action.restore.button' /></Button>
+        case 'conflict deleted':
+        case 'conflict updated':
+          return (
+            <React.Fragment>
+              <Button onClick={command.ConflictSetRemote} ><Text id='item.action.keep_remote.button' /></Button>
+              <Placeholder width='2px' />
+              <Button onClick={command.ConflictSetLocal} ><Text id='item.action.keep_local.button' /></Button>
+            </React.Fragment>
+          )
+        case 'conflict missing':
+          return <Button onClick={command.ConflictSetLocal} ><Text id='item.action.create.button' /></Button>
+      }
     }
+
+    const actions = current_actions();
+    if (!actions) {
+      return null;
+    }
+
+    return (
+      <React.Fragment>
+        <Placeholder height='5px' />
+        {actions}
+      </React.Fragment>
+    )
   }
 
   const CommandBar = () => {
@@ -401,7 +413,7 @@ const Frame = ({ setFrameRef, getRemote, getLocal, children, command }) => {
     >
       <MessageBar />
       {current_content()}
-      {current_action_group()}
+      <ActionBar />
       <CommandBar />
     </div>
   )

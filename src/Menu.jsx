@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import AppBar from '@mui/material/AppBar';
 import Toolbar from '@mui/material/Toolbar';
 import Tooltip from '@mui/material/Tooltip';
@@ -7,7 +7,7 @@ import SettingsIcon from '@mui/icons-material/Settings';
 import SyncIcon from '@mui/icons-material/Sync';
 import CircularProgress from '@mui/material/CircularProgress';
 import { useLocalRef } from './utility/localRef';
-import { useLocalState } from './utility/localState';
+import { useLocalStateJson } from './utility/localState';
 import Text from './lang/Text';
 import Message from './widget/Message';
 import Button from './widget/Button';
@@ -21,15 +21,24 @@ import './Menu.css';
 
 export default function Menu({ token, setToken, setMenuRef, getListRef }) {
   const [getUser, setUser] = useLocalRef('user');
-  const [time, setTime] = useLocalState('lastSyncTime');
-  const [online, setOnline] = useLocalState('online');
+  const [time, setTime] = useLocalStateJson('lastSyncTime');
+  const [online, setOnline] = useLocalStateJson('online');
   const [syncing, setSyncing] = useState(false);
   const [dialog, setDialog] = useState('');
 
   setMenuRef({
-    onSync: succeeded => { succeeded ? (setTime(new Date().toLocaleString()), setOnline(true)) : setOnline(false) },
+    time,
+    onSync: succeeded => { succeeded ? (setTime(Date.now()), setOnline(true)) : setOnline(null) },
     setSyncing
   });
+
+  useEffect(() => {
+    if (!token) {
+      setTime(null);
+      setOnline(null);
+      setSyncing(false);
+    }
+  }, [token]);
 
   const Dialog = () => {
     const [error, setError] = useState(null);
@@ -89,7 +98,9 @@ export default function Menu({ token, setToken, setMenuRef, getListRef }) {
                     <div style={{ backgroundColor: online ? 'mediumseagreen' : 'lightcoral', borderRadius: '50%', width: '15px', height: '15px' }}></div>
                   </Tooltip>
                   <Placeholder width='10px' />
-                  <span>{time}</span>
+                  <Tooltip title={<Text id='menu.last_sync_time.tooltip' />}>
+                    <span>{time ? new Date(time).toLocaleString() : <Text id='menu.never_synced.text' />}</span>
+                  </Tooltip>
                   <Placeholder width='5px' />
                   <Tooltip title={<Text id={syncing ? 'menu.syncing.tooltip' : 'menu.sync.tooltip'} />}>
                     {

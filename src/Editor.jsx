@@ -135,6 +135,7 @@ const Toolbar = () => {
   return (
     <PositionAbsolute
       innerRef={ref}
+      zIndex='2048'
       style={{ display: 'flex', visibility: 'hidden' }}
       onMouseDown={event => event.preventDefault()}
     >

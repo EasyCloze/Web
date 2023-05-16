@@ -6,7 +6,7 @@ export function useLocalState(key: string): [string | null, (value: string | nul
   return [state, (value: string | null) => { setItem(value); setState(value); }];
 }
 
-export function useLocalStateJson(key: string, defaultValue: any): [any, (value: any) => void] {
+export function useLocalStateJson(key: string, defaultValue: any = null): [any, (value: any) => void] {
   const [item, setItem] = localJson(key), [state, setState] = useState(item);
   return [state || defaultValue, (value: any) => { setItem(value); setState(value); }];
 }
