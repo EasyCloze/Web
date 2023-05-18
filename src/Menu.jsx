@@ -2,13 +2,13 @@ import React, { useEffect, useState } from 'react';
 import AppBar from '@mui/material/AppBar';
 import Toolbar from '@mui/material/Toolbar';
 import Tooltip from '@mui/material/Tooltip';
-import IconButton from '@mui/material/IconButton';
 import SettingsIcon from '@mui/icons-material/Settings';
 import SyncIcon from '@mui/icons-material/Sync';
 import CircularProgress from '@mui/material/CircularProgress';
 import { useLocalRef } from './utility/localRef';
 import { useLocalStateJson } from './utility/localState';
 import Text from './lang/Text';
+import IconButton from './widget/IconButton';
 import Message from './widget/Message';
 import Button from './widget/Button';
 import Placeholder from './widget/Placeholder';
@@ -28,8 +28,9 @@ export default function Menu({ token, setToken, setMenuRef, getListRef }) {
 
   setMenuRef({
     time,
+    syncing,
+    setSyncing,
     onSync: succeeded => { succeeded ? (setTime(Date.now()), setOnline(true)) : setOnline(null) },
-    setSyncing
   });
 
   useEffect(() => {
@@ -79,11 +80,7 @@ export default function Menu({ token, setToken, setMenuRef, getListRef }) {
     <div>
       <AppBar position='static'>
         <Toolbar variant='dense' className='menu'>
-          <Tooltip title={<Text id='menu.setting.tooltip' />}>
-            <IconButton onClick={() => setDialog('setting')} >
-              <SettingsIcon />
-            </IconButton>
-          </Tooltip>
+          <IconButton icon={<SettingsIcon />} title={<Text id='menu.setting.tooltip' />} onClick={() => setDialog('setting')} />
           <div style={{ display: 'flex', flexDirection: 'row', alignItems: 'center' }}>
             {
               !token ? (
@@ -102,15 +99,11 @@ export default function Menu({ token, setToken, setMenuRef, getListRef }) {
                     <span>{time ? new Date(time).toLocaleString() : <Text id='menu.never_synced.text' />}</span>
                   </Tooltip>
                   <Placeholder width='5px' />
-                  <Tooltip title={<Text id={syncing ? 'menu.syncing.tooltip' : 'menu.sync.tooltip'} />}>
-                    {
-                      syncing ?
-                        <CircularProgress size='20px' /> :
-                        <IconButton onClick={() => getListRef().sync()} >
-                          <SyncIcon />
-                        </IconButton>
-                    }
-                  </Tooltip>
+                  {
+                    syncing ?
+                      <CircularProgress size='20px' /> :
+                      <IconButton icon={<SyncIcon />} title={<Text id='menu.sync.tooltip' />} onClick={() => getListRef().sync()} />
+                  }
                 </React.Fragment>
               )
             }

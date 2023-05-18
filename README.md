@@ -1,3 +1,3 @@
-# EasyCloze::Web
+# EasyCloze/Web
 
 EasyCloze React frontend

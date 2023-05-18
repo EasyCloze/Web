@@ -1,5 +1,12 @@
-import './IconButton.css';
+import Tooltip from '@mui/material/Tooltip';
+import IconButton from '@mui/material/IconButton';
 
-export default function ({ onClick, children, ...props }) {
-  return <button type="button" className="icon-button" onClick={onClick} {...props}>{children}</button>
+export default function ({ icon, title, onClick }) {
+  return (
+    <Tooltip title={title}>
+      <IconButton onClick={onClick} >
+        {icon}
+      </IconButton>
+    </Tooltip>
+  )
 }

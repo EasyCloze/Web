@@ -1,6 +1,4 @@
 import { useEffect, useState } from 'react';
-import Tooltip from '@mui/material/Tooltip';
-import IconButton from '@mui/material/IconButton';
 import AddIcon from '@mui/icons-material/Add';
 import { localJson } from './utility/local';
 import { useLocalStateJson } from './utility/localState';
@@ -9,6 +7,7 @@ import { useRefObj } from './utility/refObj';
 import { generate_local_id, key_remote, key_local } from './utility/id';
 import API from './utility/api';
 import Text from './lang/Text';
+import IconButton from './widget/IconButton';
 import Message from './widget/Message';
 import Placeholder from './widget/Placeholder';
 import PositionAbsolute from './widget/PositionAbsolute';
@@ -16,22 +15,85 @@ import PositionSticky from './widget/PositionSticky';
 import Item from './Item';
 import './List.css';
 
+const max_list_length = 10;
+const op_delay_interval = 1 * 60 * 1000;
+const idle_sync_period = 10 * 60 * 1000;
+const min_sync_interval = 15 * 1000;
+
 export default function List({ token, setToken, getMenuRef, setListRef }) {
-  const max_list_length = 10;
-  const min_sync_interval = 15 * 1000;
   const [list, setList] = useLocalStateJson('list', []);
   const [getErrorRef, setErrorRef] = useRefGetSet();
   const item_map = useRefObj(() => new Map());
   const sync_state = useRefObj(() => {
     return {
+      manager: null,
       enabled: false,
-      last_op_time: 0,
-      last_sync_time: 0,
-      syncing: false,
+      next: 0,
     }
   });
 
-  async function sync_fetch(token, body) {
+  sync_state.manager = (function () {
+    function enable() {
+      if (sync_state.enabled) {
+        return;
+      }
+      sync_state.enabled = true;
+      sync_state.next = 0;
+      prepare_sync();
+    }
+
+    function disable() {
+      sync_state.enabled = false;
+    }
+
+    async function do_sync() {
+      if (!token) {
+        disable();
+        return;
+      }
+      if (Date.now() < getMenuRef().time + min_sync_interval) {
+        getErrorRef().setError('list.error.limit.sync.message');
+        return;
+      }
+      if (getMenuRef().syncing) {
+        return;
+      }
+      getMenuRef().setSyncing(true);
+      await sync();
+      getMenuRef().setSyncing(false);
+    }
+
+    async function prepare_sync() {
+      if (!sync_state.enabled) {
+        return;
+      }
+      if (Date.now() >= sync_state.next) {
+        sync_state.next = Date.now() + idle_sync_period;
+        await do_sync();
+      }
+      setTimeout(sync_state.manager.prepare_sync, Math.min(sync_state.next - Date.now(), op_delay_interval));
+    }
+
+    function op() {
+      if (sync_state.enabled) {
+        sync_state.next = Date.now() + op_delay_interval;
+      }
+    }
+
+    return {
+      enable,
+      disable,
+      do_sync,
+      prepare_sync,
+      op
+    }
+  })();
+
+  setListRef({
+    sync: sync_state.manager.do_sync
+  });
+
+  async function fetch_sync(token, body) {
     try {
       const response = await fetch(API('/item/sync'), {
         method: 'POST',
@@ -68,7 +130,7 @@ export default function List({ token, setToken, getMenuRef, setListRef }) {
       }
     });
 
-    const remote = await sync_fetch(token, local);
+    const remote = await fetch_sync(token, local);
     if (!remote) {
       return;
     }
@@ -76,8 +138,8 @@ export default function List({ token, setToken, getMenuRef, setListRef }) {
       return;
     }
 
-    let set_delete = new Set();
     let list_add = [];
+    let set_delete = new Set();
 
     function onAdd(id_new) {
       list_add.push(id_new);
@@ -119,79 +181,11 @@ export default function List({ token, setToken, getMenuRef, setListRef }) {
     getMenuRef().onSync(true);
   }
 
-  let sync_manager = sync_state.sync_manager = (function () {
-    async function enable() {
-      if (sync_state.enabled) {
-        return;
-      }
-      sync_state.enabled = true;
-      prepare_sync();
-    }
-
-    async function disable() {
-      sync_state.enabled = false;
-      sync_state.last_op_time = 0;
-      sync_state.last_sync_time = 0;
-    }
-
-    async function do_sync() {
-      if (sync_state.syncing) {
-        return;
-      }
-      if (!token) {
-        sync_manager.disable();
-        return;
-      }
-      if (Date.now() < getMenuRef().time + min_sync_interval) {
-        getErrorRef().setError('list.error.limit.sync.message');
-        return;
-      }
-      sync_state.last_sync_time = Date.now();
-      sync_state.syncing = true;
-      getMenuRef().setSyncing(true);
-      await sync();
-      sync_state.syncing = false;
-      getMenuRef().setSyncing(false);
-    }
-
-    async function prepare_sync() {
-      if (!sync_state.enabled) {
-        return;
-      }
-      const op_sync_waiting_time = 60 * 1000;
-      const sync_period = 5 * 60 * 1000;
-      const op_time_elapse = Date.now() - sync_state.last_op_time;
-      const sync_time_elapse = Date.now() - sync_state.last_sync_time;
-      let next_sync;
-      if (op_time_elapse >= op_sync_waiting_time && sync_time_elapse >= sync_period) {
-        await do_sync();
-        next_sync = sync_period;
-      } else {
-        next_sync = Math.max(op_sync_waiting_time - op_time_elapse, sync_period - sync_time_elapse);
-      }
-      setTimeout(() => sync_state.sync_manager.prepare_sync(), next_sync);
-    }
-
-    async function op() {
-      if (sync_state.enabled) {
-        sync_state.last_op_time = Date.now();
-      }
-    }
-
-    return {
-      enable,
-      disable,
-      do_sync,
-      prepare_sync,
-      op
-    }
-  })();
-
   useEffect(() => {
     if (token) {
-      sync_manager.enable();
+      sync_state.manager.enable();
     } else {
-      sync_manager.disable();
+      sync_state.manager.disable();
       setList(list.map(id => {
         const [remote, setRemote] = localJson(key_remote(id));
         const [local, setLocal] = localJson(key_local(id));
@@ -218,17 +212,13 @@ export default function List({ token, setToken, getMenuRef, setListRef }) {
   }, [token]);
 
   function onCreate() {
-    sync_manager.op();
+    sync_state.manager.op();
     setList([...list, generate_local_id()]);
   }
 
   function onUpdate() {
-    sync_manager.op();
+    sync_state.manager.op();
   }
-
-  setListRef({
-    sync: () => sync_manager.do_sync()
-  });
 
   const Error = () => {
     const error_display_time = 10 * 1000;
@@ -277,11 +267,7 @@ export default function List({ token, setToken, getMenuRef, setListRef }) {
         ))
       }
       <PositionAbsolute right='20px' bottom='20px'>
-        <Tooltip title={<Text id='list.create.tooltip' />}>
-          <IconButton onClick={onCreate} >
-            <AddIcon />
-          </IconButton>
-        </Tooltip>
+        <IconButton icon={<AddIcon />} title={<Text id='list.create.tooltip' />} onClick={onCreate} />
       </PositionAbsolute>
     </div>
   )

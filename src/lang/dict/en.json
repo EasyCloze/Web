@@ -21,8 +21,8 @@
   "item.action.keep_local.button": "keep local",
   "item.action.keep_remote.button": "keep remote",
   "item.action.restore.button": "restore",
-  "item.command.delete.button": "delete",
-  "item.command.revert.button": "revert change",
+  "item.command.delete.tooltip": "delete",
+  "item.command.revert.tooltip": "revert change",
   "item.conflict.deleted.message": "This item is updated remotely and deleted locally.",
   "item.conflict.local.text": "local",
   "item.conflict.missing.message": "This item is deleted remotely and updated locally.",
@@ -47,6 +47,5 @@
   "menu.online.tooltip": "online",
   "menu.setting.tooltip": "setting",
   "menu.signup.button": "sign up",
-  "menu.sync.tooltip": "sync",
-  "menu.syncing.tooltip": "syncing"
+  "menu.sync.tooltip": "sync"
 }

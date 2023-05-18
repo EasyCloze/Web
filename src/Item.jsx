@@ -1,9 +1,12 @@
 import React, { useEffect, useState } from 'react';
+import DeleteIcon from '@mui/icons-material/Delete';
+import RestoreIcon from '@mui/icons-material/Restore';
 import { localJson } from './utility/local';
 import { useLocalRefJson } from './utility/localRef';
 import { useRefGetSet } from './utility/refGetSet';
 import { generate_local_id, key_remote, key_local, current_version, get_version_date } from './utility/id';
 import Text from './lang/Text';
+import IconButton from './widget/IconButton';
 import Button from './widget/Button';
 import Message from './widget/Message';
 import Label from './widget/Label';
@@ -363,28 +366,20 @@ const Frame = ({ setFrameRef, getRemote, getLocal, children, command }) => {
     function current_commands() {
       switch (state) {
         case 'normal':
-          return (
-            <React.Fragment>
-              <Button onClick={command.DeleteOrRestore} ><Text id='item.command.delete.button' /></Button>
-            </React.Fragment>
-          )
+          return <IconButton icon={<DeleteIcon />} title={<Text id='item.command.delete.tooltip' />} onClick={command.DeleteOrRestore} />
         case 'conflict deleted':
         case 'conflict updated':
         case 'conflict missing':
-          return (
-            <React.Fragment>
-              <Button onClick={command.ConflictDelete} ><Text id='item.command.delete.button' /></Button>
-            </React.Fragment>
-          )
+          return <IconButton icon={<DeleteIcon />} title={<Text id='item.command.delete.tooltip' />} onClick={command.ConflictDelete} />
         case 'created':
         case 'updated':
         case 'created invalid':
         case 'updated invalid':
           return (
             <React.Fragment>
-              <Button onClick={command.DeleteOrRestore} ><Text id='item.command.delete.button' /></Button>
+              <IconButton icon={<DeleteIcon />} title={<Text id='item.command.delete.tooltip' />} onClick={command.DeleteOrRestore} />
               <Placeholder width='10px' />
-              <Button onClick={command.Revert} ><Text id='item.command.revert.button' /></Button>
+              <IconButton icon={<RestoreIcon />} title={<Text id='item.command.revert.tooltip' />} onClick={command.Revert} />
             </React.Fragment>
           )
         case 'deleted normal':
