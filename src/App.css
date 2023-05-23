@@ -6,6 +6,9 @@ body {
   right: 0px;
   bottom: 0px;
   user-select: none;
+  transition-property: left, top, width, height;
+  transition-delay: 0.1s;
+  transition-duration: 0.3s;
 }
 
 .app {

@@ -366,18 +366,18 @@ const Frame = ({ setFrameRef, getRemote, getLocal, children, command }) => {
     function current_commands() {
       switch (state) {
         case 'normal':
-          return <IconButton icon={<DeleteIcon />} title={<Text id='item.command.delete.tooltip' />} onClick={command.DeleteOrRestore} />
+          return <IconButton icon={<DeleteIcon htmlColor="lightcoral" />} title={<Text id='item.command.delete.tooltip' />} onClick={command.DeleteOrRestore} />
         case 'conflict deleted':
         case 'conflict updated':
         case 'conflict missing':
-          return <IconButton icon={<DeleteIcon />} title={<Text id='item.command.delete.tooltip' />} onClick={command.ConflictDelete} />
+          return <IconButton icon={<DeleteIcon htmlColor="lightcoral"/>} title={<Text id='item.command.delete.tooltip' />} onClick={command.ConflictDelete} />
         case 'created':
         case 'updated':
         case 'created invalid':
         case 'updated invalid':
           return (
             <React.Fragment>
-              <IconButton icon={<DeleteIcon />} title={<Text id='item.command.delete.tooltip' />} onClick={command.DeleteOrRestore} />
+              <IconButton icon={<DeleteIcon htmlColor="lightcoral" />} title={<Text id='item.command.delete.tooltip' />} onClick={command.DeleteOrRestore} />
               <Placeholder width='10px' />
               <IconButton icon={<RestoreIcon />} title={<Text id='item.command.revert.tooltip' />} onClick={command.Revert} />
             </React.Fragment>
