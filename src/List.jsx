@@ -16,7 +16,7 @@ import Item from './Item';
 import './List.css';
 
 const max_list_length = 10;
-const op_delay_interval = 1 * 60 * 1000;
+const op_delay_interval = 3 * 60 * 1000;
 const idle_sync_period = 10 * 60 * 1000;
 const min_sync_interval = 15 * 1000;
 
@@ -28,6 +28,7 @@ export default function List({ token, setToken, getMenuRef, setListRef }) {
     return {
       manager: null,
       enabled: false,
+      syncing: false,
       next: 0,
     }
   });
@@ -55,12 +56,12 @@ export default function List({ token, setToken, getMenuRef, setListRef }) {
         getErrorRef().setError('list.error.limit.sync.message');
         return;
       }
-      if (getMenuRef().syncing) {
+      if (sync_state.syncing) {
         return;
       }
-      getMenuRef().setSyncing(true);
+      getMenuRef().setSyncing(sync_state.syncing = true);
       await sync();
-      getMenuRef().setSyncing(false);
+      getMenuRef().setSyncing(sync_state.syncing = false);
     }
 
     async function prepare_sync() {
@@ -68,10 +69,11 @@ export default function List({ token, setToken, getMenuRef, setListRef }) {
         return;
       }
       if (Date.now() >= sync_state.next) {
-        sync_state.next = Date.now() + idle_sync_period;
         await do_sync();
+        setTimeout(sync_state.manager.prepare_sync, op_delay_interval);
+      } else {
+        setTimeout(sync_state.manager.prepare_sync, Math.min(sync_state.next - Date.now(), op_delay_interval));
       }
-      setTimeout(sync_state.manager.prepare_sync, Math.min(sync_state.next - Date.now(), op_delay_interval));
     }
 
     function op() {
@@ -179,6 +181,7 @@ export default function List({ token, setToken, getMenuRef, setListRef }) {
     setList([...list.filter(id => !set_delete.has(id)), ...list_add].sort());
 
     getMenuRef().onSync(true);
+    sync_state.next = Date.now() + idle_sync_period;
   }
 
   useEffect(() => {
@@ -260,7 +263,7 @@ export default function List({ token, setToken, getMenuRef, setListRef }) {
         list.map(id => (
           <Item
             key={id}
-            item_map={item_map}
+            setItemRef={val => item_map.set(id, val)}
             id={id}
             onUpdate={onUpdate}
           />

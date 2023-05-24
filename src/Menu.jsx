@@ -28,7 +28,6 @@ export default function Menu({ token, setToken, setMenuRef, getListRef }) {
 
   setMenuRef({
     time,
-    syncing,
     setSyncing,
     onSync: succeeded => { succeeded ? (setTime(Date.now()), setOnline(true)) : setOnline(null) },
   });

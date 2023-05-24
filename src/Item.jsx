@@ -15,7 +15,7 @@ import PositionAbsolute from './widget/PositionAbsolute';
 import Editor from './Editor';
 import './Item.css';
 
-export default function ({ item_map, id, onUpdate }) {
+export default function ({ setItemRef, id, onUpdate }) {
   const [getRemote, setRemote] = useLocalRefJson(key_remote(id), { ver: 0, val: JSON.stringify([{ children: [{ text: '' }] }]) });
   const [getLocal, setLocal] = useLocalRefJson(key_local(id), { ref: 0, ver: 0, val: null });
   const [getTemp, setTemp] = useRefGetSet({ ver: 0, val: null });
@@ -126,7 +126,7 @@ export default function ({ item_map, id, onUpdate }) {
     onUpdate();
   }
 
-  item_map.set(id, {
+  setItemRef({
     sync: () => {
       const ver_remote = getRemote().ver;
       const { ref, ver, val } = getLocal();
@@ -370,7 +370,7 @@ const Frame = ({ setFrameRef, getRemote, getLocal, children, command }) => {
         case 'conflict deleted':
         case 'conflict updated':
         case 'conflict missing':
-          return <IconButton icon={<DeleteIcon htmlColor="lightcoral"/>} title={<Text id='item.command.delete.tooltip' />} onClick={command.ConflictDelete} />
+          return <IconButton icon={<DeleteIcon htmlColor="lightcoral" />} title={<Text id='item.command.delete.tooltip' />} onClick={command.ConflictDelete} />
         case 'created':
         case 'updated':
         case 'created invalid':
