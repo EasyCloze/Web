@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import AddIcon from '@mui/icons-material/Add';
 import { localJson } from './utility/local';
 import { useLocalStateJson } from './utility/localState';
@@ -10,7 +10,7 @@ import Text from './lang/Text';
 import IconButton from './widget/IconButton';
 import Message from './widget/Message';
 import Placeholder from './widget/Placeholder';
-import PositionAbsolute from './widget/PositionAbsolute';
+import PositionFixed from './widget/PositionFixed';
 import PositionSticky from './widget/PositionSticky';
 import Item from './Item';
 import './List.css';
@@ -242,10 +242,8 @@ export default function List({ token, setToken, getMenuRef, setListRef }) {
     }
 
     return (
-      <PositionSticky top='0px'>
-        <Placeholder height='10px' />
+      <PositionSticky top='50px' style={{ paddingTop: '5px', textAlign: 'center' }}>
         <Message><Text id={error} /></Message>
-        <Placeholder height='5px' />
       </PositionSticky>
     )
   }
@@ -257,21 +255,23 @@ export default function List({ token, setToken, getMenuRef, setListRef }) {
   });
 
   return (
-    <div className='list'>
+    <React.Fragment>
       <Error />
-      {
-        list.map(id => (
-          <Item
-            key={id}
-            setItemRef={val => item_map.set(id, val)}
-            id={id}
-            onUpdate={onUpdate}
-          />
-        ))
-      }
-      <PositionAbsolute right='20px' bottom='20px'>
+      <div className='list'>
+        {
+          list.map(id => (
+            <Item
+              key={id}
+              setItemRef={val => item_map.set(id, val)}
+              id={id}
+              onUpdate={onUpdate}
+            />
+          ))
+        }
+      </div>
+      <PositionFixed right='20px' bottom='20px'>
         <IconButton icon={<AddIcon />} title={<Text id='list.create.tooltip' />} onClick={onCreate} />
-      </PositionAbsolute>
-    </div>
+      </PositionFixed>
+    </React.Fragment>
   )
 }

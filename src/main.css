@@ -1,0 +1,10 @@
+body {
+  margin: 0px;
+  user-select: none;
+}
+
+@media print {
+  body {
+    visibility: hidden;
+  }
+}

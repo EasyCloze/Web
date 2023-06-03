@@ -76,8 +76,8 @@ export default function Menu({ token, setToken, setMenuRef, getListRef }) {
   }
 
   return (
-    <div>
-      <AppBar position='static'>
+    <React.Fragment>
+      <AppBar position='fixed'>
         <Toolbar variant='dense' className='menu'>
           <IconButton icon={<SettingsIcon />} title={<Text id='menu.setting.tooltip' />} onClick={() => setDialog('setting')} />
           <div style={{ display: 'flex', flexDirection: 'row', alignItems: 'center' }}>
@@ -109,8 +109,7 @@ export default function Menu({ token, setToken, setMenuRef, getListRef }) {
           </div>
         </Toolbar>
       </AppBar>
-      <Placeholder height='5px' />
       <Dialog />
-    </div>
+    </React.Fragment>
   )
 }

@@ -1,5 +1,14 @@
 .list {
-  height: 100%;
-  padding-bottom: 70px;
-  overflow-y: auto;
+  width: 100%;
+  max-width: 750px;
+  margin: 0px auto;
+  padding: 50px 0px 70px;
+}
+
+@media print {
+  .list {
+    visibility: visible;
+    max-width: none;
+    padding: 0px;
+  }
 }

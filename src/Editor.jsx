@@ -45,6 +45,8 @@ export default function ({ readonly, setEditorRef, value, onChange, onFocusChang
     return null;
   }
 
+  editor.mouse = { x: 0, y: 0 };
+
   return (
     <Slate
       editor={editor}

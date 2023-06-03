@@ -10,4 +10,11 @@
   border-radius: 2px;
   border-color: lightgray;
   padding: 5px;
+  user-select: text;
+}
+
+@media print {
+  .item {
+    border-color: black !important;
+  }
 }

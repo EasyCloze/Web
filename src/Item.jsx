@@ -11,7 +11,7 @@ import Button from './widget/Button';
 import Message from './widget/Message';
 import Label from './widget/Label';
 import Placeholder from './widget/Placeholder';
-import PositionAbsolute from './widget/PositionAbsolute';
+import PositionFixed from './widget/PositionFixed';
 import Editor from './Editor';
 import './Item.css';
 
@@ -304,16 +304,23 @@ const Frame = ({ setFrameRef, getRemote, getLocal, children, command }) => {
       case 'conflict deleted':
       case 'conflict updated':
         return (
-          <React.Fragment>
-            <Label>{get_version_date(getRemote().ver)}<Text id='item.conflict.remote.text' /></Label>
-            <div className='item-diff-frame'>
-              <Editor readOnly value={JSON.parse(getRemote().val)} />
+          <div
+            style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}
+            onClick={event => event.currentTarget.style.flexDirection = event.currentTarget.style.flexDirection === 'column' ? 'row' : 'column'}
+          >
+            <div>
+              <Label>{get_version_date(getRemote().ver)} <Text id='item.conflict.remote.text' /></Label>
+              <div className='item-diff-frame' onClick={event => event.stopPropagation()}>
+                <Editor readonly value={JSON.parse(getRemote().val)} />
+              </div>
             </div>
-            <Label>{get_version_date(Math.abs(getLocal().ver))}<Text id='item.conflict.local.text' /></Label>
-            <div className='item-diff-frame'>
-              {children}
+            <div>
+              <Label>{get_version_date(Math.abs(getLocal().ver))} <Text id='item.conflict.local.text' /></Label>
+              <div className='item-diff-frame' onClick={event => event.stopPropagation()}>
+                {children}
+              </div>
             </div>
-          </React.Fragment>
+          </div>
         )
     }
   }
@@ -395,9 +402,9 @@ const Frame = ({ setFrameRef, getRemote, getLocal, children, command }) => {
     }
 
     return (
-      <PositionAbsolute left='20px' bottom='20px' onMouseDown={event => event.preventDefault()}>
+      <PositionFixed left='20px' bottom='20px' onMouseDown={event => event.preventDefault()}>
         {commands}
-      </PositionAbsolute>
+      </PositionFixed>
     )
   }
 
