@@ -8,14 +8,14 @@ import Placeholder from './widget/Placeholder';
 import PositionAbsolute from './widget/PositionAbsolute';
 import './Editor.css';
 
-export default function ({ readonly, setEditorRef, value, onChange, onFocusChange }) {
+export default function ({ readonly, setEditorRef, getValue, onChange, onFocusChange }) {
   const editor = useMemo(() => withHistory(withReact(createEditor())), []);
 
   if (readonly) {
     return (
       <Slate
         editor={editor}
-        value={value}
+        value={getValue()}
       >
         <Editable
           readOnly
@@ -50,7 +50,7 @@ export default function ({ readonly, setEditorRef, value, onChange, onFocusChang
   return (
     <Slate
       editor={editor}
-      value={value}
+      value={getValue()}
       onChange={value => {
         if (editor.operations.some(op => op.type !== 'set_selection')) {
           onChange(value);

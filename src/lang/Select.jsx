@@ -4,7 +4,7 @@ import Text from './Text';
 import LanguageContext from './context';
 import dict from './dict';
 
-export default function LangSelect() {
+export default function () {
   const { lang, setLang } = useContext(LanguageContext);
 
   return (

@@ -1,5 +1,5 @@
 import './Message.css';
 
-export default function ({ children }) {
-  return <div className='message'>{children}</div>
+export default function ({ children, ...props }) {
+  return <div className='message' {...props}>{children}</div>
 }

@@ -2,23 +2,3 @@
   justify-content: space-between;
   background-color: lightsteelblue;
 }
-
-.dialog-frame {
-  position: fixed;
-  z-index: 2000;
-  left: 0px;
-  right: 0px;
-  top: 0px;
-  bottom: 0px;
-  background-color: rgba(0, 0, 0, 0.3);
-}
-
-.dialog {
-  position: absolute;
-  left: 50%;
-  top: 50%;
-  transform: translate(-50%, -50%);
-  background-color: white;
-  border-radius: 5px;
-  padding: 30px;
-}

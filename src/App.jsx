@@ -4,7 +4,7 @@ import LanguageProvider from './lang/Provider';
 import Menu from './Menu';
 import List from './List';
 
-export default function App() {
+export default function () {
   const [token, setToken] = useLocalState('token');
   const [getMenuRef, setMenuRef] = useRefGetSet();
   const [getListRef, setListRef] = useRefGetSet();

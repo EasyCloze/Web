@@ -5,26 +5,20 @@ import Tooltip from '@mui/material/Tooltip';
 import SettingsIcon from '@mui/icons-material/Settings';
 import SyncIcon from '@mui/icons-material/Sync';
 import CircularProgress from '@mui/material/CircularProgress';
-import { useLocalRef } from './utility/localRef';
 import { useLocalStateJson } from './utility/localState';
+import { useRefGetSet } from './utility/refGetSet';
 import Text from './lang/Text';
 import IconButton from './widget/IconButton';
-import Message from './widget/Message';
 import Button from './widget/Button';
 import Placeholder from './widget/Placeholder';
-import Setting from './dialog/Setting';
-import Signup from './dialog/Signup';
-import Login from './dialog/Login';
-import Password from './dialog/Password';
-import Delete from './dialog/Delete';
+import Dialog from './dialog/Dialog';
 import './Menu.css';
 
-export default function Menu({ token, setToken, setMenuRef, getListRef }) {
-  const [getUser, setUser] = useLocalRef('user');
+export default function ({ token, setToken, setMenuRef, getListRef }) {
   const [time, setTime] = useLocalStateJson('lastSyncTime');
   const [online, setOnline] = useLocalStateJson('online');
   const [syncing, setSyncing] = useState(false);
-  const [dialog, setDialog] = useState('');
+  const [getDialogRef, setDialogRef] = useRefGetSet();
 
   setMenuRef({
     time,
@@ -40,53 +34,18 @@ export default function Menu({ token, setToken, setMenuRef, getListRef }) {
     }
   }, [token]);
 
-  const Dialog = () => {
-    const [error, setError] = useState(null);
-
-    function current_dialog() {
-      switch (dialog) {
-        case 'setting':
-          return <Setting token={token} setToken={setToken} user={getUser()} setDialog={setDialog} />
-        case 'signup':
-          return <Signup setError={setError} setDialog={setDialog} />
-        case 'login':
-          return <Login setError={setError} setUser={setUser} setToken={setToken} setDialog={setDialog} />
-        case 'password':
-          return <Password setError={setError} token={token} setToken={setToken} user={getUser()} setDialog={setDialog} />
-        case 'delete':
-          return <Delete setError={setError} token={token} setToken={setToken} setDialog={setDialog} />
-        default:
-          return null;
-      }
-    }
-
-    let children = current_dialog();
-    if (!children) {
-      return null;
-    }
-
-    return (
-      <div className='dialog-frame' onClick={() => setDialog(null)}>
-        <div className='dialog' onClick={event => event.stopPropagation()}>
-          {error && <Message><Text id={error} /></Message>}
-          {children}
-        </div>
-      </div>
-    )
-  }
-
   return (
     <React.Fragment>
       <AppBar position='fixed'>
         <Toolbar variant='dense' className='menu'>
-          <IconButton icon={<SettingsIcon />} title={<Text id='menu.setting.tooltip' />} onClick={() => setDialog('setting')} />
+          <IconButton icon={<SettingsIcon />} title={<Text id='menu.setting.tooltip' />} onClick={() => getDialogRef().setDialog('setting')} />
           <div style={{ display: 'flex', flexDirection: 'row', alignItems: 'center' }}>
             {
               !token ? (
                 <React.Fragment>
-                  <Button onClick={() => setDialog('signup')} ><Text id='menu.signup.button' /></Button>
+                  <Button onClick={() => getDialogRef().setDialog('signup')} ><Text id='menu.signup.button' /></Button>
                   <Placeholder width='5px' />
-                  <Button onClick={() => setDialog('login')} ><Text id='menu.login.button' /></Button>
+                  <Button onClick={() => getDialogRef().setDialog('login')} ><Text id='menu.login.button' /></Button>
                 </React.Fragment>
               ) : (
                 <React.Fragment>
@@ -109,7 +68,7 @@ export default function Menu({ token, setToken, setMenuRef, getListRef }) {
           </div>
         </Toolbar>
       </AppBar>
-      <Dialog />
+      <Dialog setDialogRef={setDialogRef} token={token} setToken={setToken} />
     </React.Fragment>
   )
 }

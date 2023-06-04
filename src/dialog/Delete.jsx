@@ -4,7 +4,7 @@ import Label from '../widget/Label';
 import Placeholder from '../widget/Placeholder';
 import ButtonSubmit from '../widget/ButtonSubmit';
 
-export default function Delete({ setError, token, setToken, setDialog }) {
+export default function ({ setError, token, setToken, setDialog }) {
   return (
     <form onSubmit={async event => {
       event.preventDefault();

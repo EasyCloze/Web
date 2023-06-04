@@ -1,5 +1,5 @@
 import './Label.css';
 
-export default function ({ children }) {
-  return <div className='label'>{children}</div>
+export default function ({ children, ...props }) {
+  return <div className='label' {...props}>{children}</div>
 }

@@ -4,7 +4,7 @@ import Placeholder from '../widget/Placeholder';
 import Button from '../widget/Button';
 import LangSelect from '../lang/Select';
 
-export default function Setting({ token, setToken, user, setDialog }) {
+export default function ({ token, setToken, user, setDialog }) {
   return (
     <React.Fragment>
       {
@@ -23,6 +23,7 @@ export default function Setting({ token, setToken, user, setDialog }) {
         )
       }
       <LangSelect />
+      <div style={{ position: 'relative', top: '20px', fontSize: '12px', textAlign: 'center' }} onClick={() => { setDialog('about'); }}>EasyCloze ©</div>
     </React.Fragment>
   )
 }

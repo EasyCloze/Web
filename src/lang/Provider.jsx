@@ -2,7 +2,7 @@ import { useLocalState } from '../utility/localState';
 import LanguageContext from './context';
 import dict from './dict';
 
-export default function LanguageProvider({ children }) {
+export default function ({ children }) {
   const [lang, setLang] = useLocalState('lang');
 
   return (

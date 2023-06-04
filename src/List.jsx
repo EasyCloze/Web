@@ -9,7 +9,6 @@ import API from './utility/api';
 import Text from './lang/Text';
 import IconButton from './widget/IconButton';
 import Message from './widget/Message';
-import Placeholder from './widget/Placeholder';
 import PositionFixed from './widget/PositionFixed';
 import PositionSticky from './widget/PositionSticky';
 import Item from './Item';
@@ -20,7 +19,7 @@ const op_delay_interval = 3 * 60 * 1000;
 const idle_sync_period = 10 * 60 * 1000;
 const min_sync_interval = 15 * 1000;
 
-export default function List({ token, setToken, getMenuRef, setListRef }) {
+export default function ({ token, setToken, getMenuRef, setListRef }) {
   const [list, setList] = useLocalStateJson('list', []);
   const [getErrorRef, setErrorRef] = useRefGetSet();
   const item_map = useRefObj(() => new Map());
@@ -29,6 +28,7 @@ export default function List({ token, setToken, getMenuRef, setListRef }) {
       manager: null,
       enabled: false,
       syncing: false,
+      time: 0,
       next: 0,
     }
   });
@@ -52,7 +52,7 @@ export default function List({ token, setToken, getMenuRef, setListRef }) {
         disable();
         return;
       }
-      if (Date.now() < getMenuRef().time + min_sync_interval) {
+      if (Date.now() < sync_state.time + min_sync_interval) {
         getErrorRef().setError('list.error.limit.sync.message');
         return;
       }
@@ -94,6 +94,46 @@ export default function List({ token, setToken, getMenuRef, setListRef }) {
   setListRef({
     sync: sync_state.manager.do_sync
   });
+
+  useEffect(() => {
+    if (token) {
+      sync_state.manager.enable();
+      sync_state.time = getMenuRef().time;
+    } else {
+      sync_state.manager.disable();
+      setList(list.map(id => {
+        const [remote, setRemote] = localJson(key_remote(id));
+        const [local, setLocal] = localJson(key_local(id));
+        if (!local) {
+          return;
+        }
+        const { ver, val } = local;
+        if (ver > 0 && val) {
+          if (!remote) {
+            return id;
+          } else {
+            id = generate_local_id(ver);
+            const [, setLocalNew] = localJson(key_local(id));
+            setLocalNew({ ref: 0, ver, val });
+          }
+        } else {
+          id = null;
+        }
+        setRemote(null);
+        setLocal(null);
+        return id;
+      }).filter(id => id).sort());
+    }
+  }, [token]);
+
+  function onCreate() {
+    sync_state.manager.op();
+    setList([...list, generate_local_id()]);
+  }
+
+  function onUpdate() {
+    sync_state.manager.op();
+  }
 
   async function fetch_sync(token, body) {
     try {
@@ -181,46 +221,8 @@ export default function List({ token, setToken, getMenuRef, setListRef }) {
     setList([...list.filter(id => !set_delete.has(id)), ...list_add].sort());
 
     getMenuRef().onSync(true);
+    sync_state.time = Date.now();
     sync_state.next = Date.now() + idle_sync_period;
-  }
-
-  useEffect(() => {
-    if (token) {
-      sync_state.manager.enable();
-    } else {
-      sync_state.manager.disable();
-      setList(list.map(id => {
-        const [remote, setRemote] = localJson(key_remote(id));
-        const [local, setLocal] = localJson(key_local(id));
-        if (!local) {
-          return;
-        }
-        const { ver, val } = local;
-        if (ver > 0 && val) {
-          if (!remote) {
-            return id;
-          } else {
-            id = generate_local_id(ver);
-            const [, setLocalNew] = localJson(key_local(id));
-            setLocalNew({ ref: 0, ver, val });
-          }
-        } else {
-          id = null;
-        }
-        setRemote(null);
-        setLocal(null);
-        return id;
-      }).filter(id => id).sort());
-    }
-  }, [token]);
-
-  function onCreate() {
-    sync_state.manager.op();
-    setList([...list, generate_local_id()]);
-  }
-
-  function onUpdate() {
-    sync_state.manager.op();
   }
 
   const Error = () => {

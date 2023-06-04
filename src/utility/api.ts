@@ -1,3 +1,5 @@
-export default function API(path: string): string {
-  return import.meta.env.VITE_API + path;
+import { API } from './env';
+
+export default (path: string): string => {
+  return API + path;
 }

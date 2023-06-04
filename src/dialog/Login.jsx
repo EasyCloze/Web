@@ -6,7 +6,7 @@ import Input from '../widget/Input';
 import Placeholder from '../widget/Placeholder';
 import ButtonSubmit from '../widget/ButtonSubmit';
 
-export default function Login({ setError, setUser, setToken, setDialog }) {
+export default function ({ setError, setUser, setToken, setDialog }) {
   return (
     <form onSubmit={async event => {
       event.preventDefault();

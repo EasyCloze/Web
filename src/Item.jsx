@@ -217,7 +217,7 @@ export default function ({ setItemRef, id, onUpdate }) {
     >
       <Editor
         setEditorRef={setEditorRef}
-        value={JSON.parse(getLocal().val || getRemote().val)}
+        getValue={() => JSON.parse(getLocal().val || getRemote().val)}
         onChange={value => onChange(JSON.stringify(value))}
         onFocusChange={focused => getFrameRef().setFocused(focused)}
       />
@@ -281,12 +281,7 @@ const Frame = ({ setFrameRef, getRemote, getLocal, children, command }) => {
       return null;
     }
 
-    return (
-      <React.Fragment>
-        <Message><Text id={text_id} /></Message>
-        <Placeholder height='5px' />
-      </React.Fragment>
-    )
+    return <Message><Text id={text_id} /></Message>
   }
 
   function current_content() {
@@ -297,10 +292,11 @@ const Frame = ({ setFrameRef, getRemote, getLocal, children, command }) => {
       case 'created invalid':
       case 'updated invalid':
       case 'conflict missing':
+        return children;
       case 'deleted normal':
       case 'deleted created':
       case 'deleted updated':
-        return children;
+        return null;
       case 'conflict deleted':
       case 'conflict updated':
         return (
@@ -308,13 +304,13 @@ const Frame = ({ setFrameRef, getRemote, getLocal, children, command }) => {
             style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}
             onClick={event => event.currentTarget.style.flexDirection = event.currentTarget.style.flexDirection === 'column' ? 'row' : 'column'}
           >
-            <div>
+            <div style={{ flex: 1 }}>
               <Label>{get_version_date(getRemote().ver)} <Text id='item.conflict.remote.text' /></Label>
               <div className='item-diff-frame' onClick={event => event.stopPropagation()}>
-                <Editor readonly value={JSON.parse(getRemote().val)} />
+                <Editor readonly getValue={() => JSON.parse(getRemote().val)} />
               </div>
             </div>
-            <div>
+            <div style={{ flex: 1 }}>
               <Label>{get_version_date(Math.abs(getLocal().ver))} <Text id='item.conflict.local.text' /></Label>
               <div className='item-diff-frame' onClick={event => event.stopPropagation()}>
                 {children}
@@ -357,12 +353,7 @@ const Frame = ({ setFrameRef, getRemote, getLocal, children, command }) => {
       return null;
     }
 
-    return (
-      <React.Fragment>
-        <Placeholder height='5px' />
-        {actions}
-      </React.Fragment>
-    )
+    return <div style={{ marginTop: '5px' }}>{actions}</div>
   }
 
   const CommandBar = () => {
