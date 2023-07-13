@@ -166,9 +166,12 @@ export default function ({ token, setToken, getMenuRef, setListRef }) {
     let local = [];
 
     list.slice(0, max_list_length).forEach(id => {
-      const item = item_map.get(id).sync();
+      const item = item_map.get(id);
       if (item) {
-        local.push(item);
+        const data = item.sync();
+        if (data) {
+          local.push(data);
+        }
       }
     });
 

@@ -2,13 +2,19 @@ import { useLocalState } from '../utility/localState';
 import LanguageContext from './context';
 import dict from './dict';
 
+function current_lang() {
+  let current = navigator.language;
+  let [first] = current.split('-');
+  return Object.hasOwn(dict, first) ? first : 'en';
+}
+
 export default function ({ children }) {
   const [lang, setLang] = useLocalState('lang');
 
   return (
     <LanguageContext.Provider value={{
       lang,
-      dict: dict[lang || (Object.hasOwn(dict, navigator.language) ? navigator.language : 'en')],
+      dict: dict[lang || current_lang()],
       setLang
     }}>
       {children}

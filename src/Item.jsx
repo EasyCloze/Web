@@ -281,7 +281,7 @@ const Frame = ({ setFrameRef, getRemote, getLocal, children, command }) => {
       return null;
     }
 
-    return <Message><Text id={text_id} /></Message>
+    return <Message style={{ marginBottom: '5px' }}><Text id={text_id} /></Message>
   }
 
   function current_content() {

@@ -45,7 +45,7 @@ export default function ({ readonly, setEditorRef, getValue, onChange, onFocusCh
     return null;
   }
 
-  editor.mouse = { x: 0, y: 0 };
+  editor.mouse = null;
 
   return (
     <Slate
@@ -90,7 +90,7 @@ const Toolbar = () => {
     ref.current.style.visibility = 'visible';
   });
 
-  if (!focused || !selection || !first && (Range.isCollapsed(selection) || !Editor.string(editor, selection))) {
+  if (!editor.mouse || !focused || !selection || !first && (Range.isCollapsed(selection) || !Editor.string(editor, selection))) {
     return null;
   }
 
