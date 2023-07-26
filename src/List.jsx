@@ -18,6 +18,7 @@ const max_list_length = 10;
 const op_delay_interval = 3 * 60 * 1000;
 const idle_sync_period = 10 * 60 * 1000;
 const min_sync_interval = 15 * 1000;
+const check_sync_interval = op_delay_interval;
 
 export default function ({ token, setToken, getMenuRef, setListRef }) {
   const [list, setList] = useLocalStateJson('list', []);
@@ -70,9 +71,9 @@ export default function ({ token, setToken, getMenuRef, setListRef }) {
       }
       if (Date.now() >= sync_state.next) {
         await do_sync();
-        setTimeout(sync_state.manager.prepare_sync, op_delay_interval);
+        setTimeout(() => sync_state.manager.prepare_sync(), check_sync_interval);
       } else {
-        setTimeout(sync_state.manager.prepare_sync, Math.min(sync_state.next - Date.now(), op_delay_interval));
+        setTimeout(() => sync_state.manager.prepare_sync(), Math.min(sync_state.next - Date.now(), check_sync_interval));
       }
     }
 
@@ -166,20 +167,14 @@ export default function ({ token, setToken, getMenuRef, setListRef }) {
     let local = [];
 
     list.slice(0, max_list_length).forEach(id => {
-      const item = item_map.get(id);
+      const item = item_map.get(id).sync();
       if (item) {
-        const data = item.sync();
-        if (data) {
-          local.push(data);
-        }
+        local.push(item);
       }
     });
 
     const remote = await fetch_sync(token, local);
-    if (!remote) {
-      return;
-    }
-    if (!sync_state.enabled) {
+    if (!remote || !sync_state.enabled) {
       return;
     }
 
@@ -225,7 +220,9 @@ export default function ({ token, setToken, getMenuRef, setListRef }) {
 
     getMenuRef().onSync(true);
     sync_state.time = Date.now();
-    sync_state.next = Date.now() + idle_sync_period;
+    if (sync_state.next <= Date.now()) {
+      sync_state.next = Date.now() + idle_sync_period;
+    }
   }
 
   const Error = () => {
