@@ -79,7 +79,7 @@ const Toolbar = () => {
   const [first, next] = Editor.nodes(editor, { match: node => Object.hasOwn(node, 'mark'), mode: 'all' });
 
   useEffect(() => {
-    if (!ref.current) {
+    if (!ref.current || (ref.current.style.visibility === 'visible' && ref.current.selection === selection)) {
       return;
     }
     const rect = ref.current.getBoundingClientRect();
@@ -88,6 +88,7 @@ const Toolbar = () => {
     ref.current.style.left = Math.max(0, Math.min(editor.mouse.x + 20 - body_rect.left, body_rect.width - rect.width)) - (parent_rect.left - body_rect.left) + 'px';
     ref.current.style.top = Math.max(0, Math.min(editor.mouse.y + 20 - body_rect.top, body_rect.height - rect.height)) - (parent_rect.top - body_rect.top) + 'px';
     ref.current.style.visibility = 'visible';
+    ref.current.selection = selection;
   });
 
   if (!editor.mouse || !focused || !selection || !first && (Range.isCollapsed(selection) || !Editor.string(editor, selection))) {
