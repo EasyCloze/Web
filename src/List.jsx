@@ -15,10 +15,11 @@ import Item from './Item';
 import './List.css';
 
 const max_list_length = 10;
-const op_delay_interval = 3 * 60 * 1000;
-const idle_sync_period = 10 * 60 * 1000;
+
 const min_sync_interval = 15 * 1000;
-const check_sync_interval = op_delay_interval;
+const check_sync_interval = 3 * 60 * 1000;
+const op_delay_interval = 3 * 60 * 1000;
+const idle_sync_interval = 10 * 60 * 1000;
 
 export default function ({ token, setToken, getMenuRef, setListRef }) {
   const [list, setList] = useLocalStateJson('list', []);
@@ -221,7 +222,7 @@ export default function ({ token, setToken, getMenuRef, setListRef }) {
     getMenuRef().onSync(true);
     sync_state.time = Date.now();
     if (sync_state.next <= Date.now()) {
-      sync_state.next = Date.now() + idle_sync_period;
+      sync_state.next = Date.now() + idle_sync_interval;
     }
   }
 
