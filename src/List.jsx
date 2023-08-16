@@ -30,6 +30,7 @@ export default function ({ token, setToken, getMenuRef, setListRef }) {
       manager: null,
       enabled: false,
       syncing: false,
+      new_item_buffer: [],
       time: 0,
       next: 0,
     }
@@ -129,8 +130,12 @@ export default function ({ token, setToken, getMenuRef, setListRef }) {
   }, [token]);
 
   function onCreate() {
+    const id = generate_local_id();
+    setList([...list, id]);
+    if (sync_state.syncing) {
+      sync_state.new_item_buffer.push(id);
+    }
     sync_state.manager.op();
-    setList([...list, generate_local_id()]);
   }
 
   function onUpdate() {
@@ -217,7 +222,8 @@ export default function ({ token, setToken, getMenuRef, setListRef }) {
       onAdd(id);
     });
 
-    setList([...list.filter(id => !set_delete.has(id)), ...list_add].sort());
+    setList([...list.filter(id => !set_delete.has(id)), ...list_add, ...sync_state.new_item_buffer].sort());
+    sync_state.new_item_buffer = [];
 
     getMenuRef().onSync(true);
     sync_state.time = Date.now();
