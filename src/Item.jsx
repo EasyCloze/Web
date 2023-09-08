@@ -15,6 +15,8 @@ import PositionFixed from './widget/PositionFixed';
 import Editor from './Editor';
 import './Item.css';
 
+const val_length_limit = 3000;
+
 export default function ({ setItemRef, id, onUpdate }) {
   const [getRemote, setRemote] = useLocalRefJson(key_remote(id), { ver: 0, val: JSON.stringify([{ children: [{ text: '' }] }]) });
   const [getLocal, setLocal] = useLocalRefJson(key_local(id), { ref: 0, ver: 0, val: null });
@@ -24,7 +26,6 @@ export default function ({ setItemRef, id, onUpdate }) {
   const [getEditorRef, setEditorRef] = useRefGetSet();
 
   function current_state() {
-    const val_length_limit = 4096;
     const ver_remote = getRemote().ver, { ref, ver, val } = getLocal();
     if (ref === ver_remote) {
       if (ver_remote === 0) {

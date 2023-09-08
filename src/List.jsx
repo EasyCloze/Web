@@ -14,7 +14,7 @@ import PositionSticky from './widget/PositionSticky';
 import Item from './Item';
 import './List.css';
 
-const max_list_length = 10;
+const max_list_length = 6;
 
 const min_sync_interval = 15 * 1000;
 const check_sync_interval = 3 * 60 * 1000;
