@@ -1,7 +1,7 @@
 .message {
   display: block;
-  padding: 0px 10px;
-  line-height: 35px;
+  padding: 5px 10px;
+  line-height: 25px;
   font-size: 0.875em;
   background-color: rgb(253, 237, 237);
 }
