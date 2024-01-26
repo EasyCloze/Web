@@ -40,6 +40,7 @@
   "list.create.tooltip": "作成",
   "list.error.limit.sync.message": "同期リクエストが頻繁すぎます。後でもう一度お試しください。",
   "list.error.overlength.message": "最初の6つのアイテムだけが同期されます。",
+  "list.length.text": "アイテム数：",
   "menu.last_sync_time.tooltip": "最終同期時刻",
   "menu.login.button": "ログイン",
   "menu.never_synced.text": "まだ同期されていません",

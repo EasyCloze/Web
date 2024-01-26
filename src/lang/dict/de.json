@@ -40,6 +40,7 @@
   "list.create.tooltip": "erstellen",
   "list.error.limit.sync.message": "Zu häufige Synchronisationsanfragen. Bitte versuchen Sie es später erneut.",
   "list.error.overlength.message": "Nur die ersten 6 Elemente werden synchronisiert.",
+  "list.length.text": "Elementanzahl:",
   "menu.last_sync_time.tooltip": "letzte Synchronisationszeit",
   "menu.login.button": "einloggen",
   "menu.never_synced.text": "noch nie synchronisiert",

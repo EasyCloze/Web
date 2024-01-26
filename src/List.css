@@ -5,6 +5,17 @@
   padding: 50px 0px 100px;
 }
 
+#list-length {
+  margin-top: 5px;
+  text-align: center;
+  font-size: small;
+  opacity: 30%;
+}
+
+#list-length:hover {
+  opacity: 70%;
+}
+
 @media print {
   .list {
     visibility: visible;

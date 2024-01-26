@@ -277,6 +277,7 @@ export default function ({ token, setToken, getMenuRef, setListRef }) {
             />
           ))
         }
+        <div id="list-length">- {<Text id='list.length.text' />} {list.length} -</div>
       </div>
       <PositionFixed right='20px' bottom='20px'>
         <IconButton icon={<AddIcon />} title={<Text id='list.create.tooltip' />} onClick={onCreate} />

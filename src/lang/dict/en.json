@@ -40,6 +40,7 @@
   "list.create.tooltip": "create",
   "list.error.limit.sync.message": "Too frequent sync requests. Please try again later.",
   "list.error.overlength.message": "Only first 6 items are synced.",
+  "list.length.text": "item count:",
   "menu.last_sync_time.tooltip": "last sync time",
   "menu.login.button": "log in",
   "menu.never_synced.text": "never synced",
