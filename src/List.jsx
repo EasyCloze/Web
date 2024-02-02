@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import AddIcon from '@mui/icons-material/Add';
+import Tooltip from '@mui/material/Tooltip';
 import { localJson } from './utility/local';
 import { useLocalStateJson } from './utility/localState';
 import { useRefGetSet } from './utility/refGetSet';
@@ -257,11 +258,7 @@ export default function ({ token, setToken, getMenuRef, setListRef }) {
     )
   }
 
-  useEffect(() => {
-    if (token && list.length > max_list_length) {
-      getErrorRef().setError('list.error.overlength.message');
-    }
-  });
+  const overlength = token && list.length > max_list_length;
 
   return (
     <React.Fragment>
@@ -277,7 +274,9 @@ export default function ({ token, setToken, getMenuRef, setListRef }) {
             />
           ))
         }
-        <div id="list-length">- {<Text id='list.length.text' />} {list.length} -</div>
+        <Tooltip title={overlength && <Text id='list.length.tooltip' />}>
+          <div id='list-length' class={overlength && 'overlength'}>- {<Text id='list.length.text' />} {list.length} -</div>
+        </Tooltip>
       </div>
       <PositionFixed right='20px' bottom='20px'>
         <IconButton icon={<AddIcon />} title={<Text id='list.create.tooltip' />} onClick={onCreate} />

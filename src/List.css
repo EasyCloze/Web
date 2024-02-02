@@ -16,6 +16,11 @@
   opacity: 70%;
 }
 
+#list-length.overlength {
+  color: red;
+  opacity: 100%;
+}
+
 @media print {
   .list {
     visibility: visible;
