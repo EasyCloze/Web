@@ -25,6 +25,7 @@ const idle_sync_interval = 10 * 60 * 1000;
 export default function ({ token, setToken, getMenuRef, setListRef }) {
   const [list, setList] = useLocalStateJson('list', []);
   const [getErrorRef, setErrorRef] = useRefGetSet();
+  const [getLengthRef, setLengthRef] = useRefGetSet();
   const item_map = useRefObj(() => new Map());
   const sync_state = useRefObj(() => {
     return {
@@ -258,7 +259,23 @@ export default function ({ token, setToken, getMenuRef, setListRef }) {
     )
   }
 
-  const overlength = token && list.length > max_list_length;
+  const Length = () => {
+    const [overlength, setOverlength] = useState(false);
+
+    setLengthRef({
+      setOverlength
+    });
+
+    return (
+      <Tooltip title={overlength && <Text id='list.length.tooltip' />}>
+        <div id='list-length' class={overlength && 'overlength'}>- {<Text id='list.length.text' />} {list.length} -</div>
+      </Tooltip>
+    )
+  }
+
+  useEffect(() => {
+    getLengthRef().setOverlength(token && list.length > max_list_length);
+  });
 
   return (
     <React.Fragment>
@@ -274,9 +291,7 @@ export default function ({ token, setToken, getMenuRef, setListRef }) {
             />
           ))
         }
-        <Tooltip title={overlength && <Text id='list.length.tooltip' />}>
-          <div id='list-length' class={overlength && 'overlength'}>- {<Text id='list.length.text' />} {list.length} -</div>
-        </Tooltip>
+        <Length />
       </div>
       <PositionFixed right='20px' bottom='20px'>
         <IconButton icon={<AddIcon />} title={<Text id='list.create.tooltip' />} onClick={onCreate} />
