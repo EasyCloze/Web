@@ -17,7 +17,7 @@ import './Item.css';
 
 const val_length_limit = 3000;
 
-export default function ({ setItemRef, id, onUpdate }) {
+export default function ({ setItemRef, id, onUpdate, onDelete }) {
   const [getRemote, setRemote] = useLocalRefJson(key_remote(id), { ver: 0, val: JSON.stringify([{ children: [{ text: '' }] }]) });
   const [getLocal, setLocal] = useLocalRefJson(key_local(id), { ref: 0, ver: 0, val: null });
   const [getTemp, setTemp] = useRefGetSet({ ver: 0, val: null });
@@ -93,7 +93,9 @@ export default function ({ setItemRef, id, onUpdate }) {
   function onChange(val) {
     setLocal({ ref: getLocal().ref, ver: current_version(), val });
     RefreshLocal();
-    onUpdate();
+    if (val.length <= val_length_limit) {
+      onUpdate();
+    }
   }
 
   function Revert() {
@@ -104,7 +106,9 @@ export default function ({ setItemRef, id, onUpdate }) {
     const { ref, ver, val } = getLocal();
     setLocal({ ref, ver: -ver, val });
     update_frame_state();
-    onUpdate();
+    if (ver > 0) {
+      onDelete();
+    }
   }
 
   function ConflictDelete() {
@@ -112,7 +116,9 @@ export default function ({ setItemRef, id, onUpdate }) {
     const { ver, val } = getLocal();
     setLocal({ ref: ver_remote, ver: -ver, val });
     update_frame_state();
-    onUpdate();
+    if (ver > 0) {
+      onDelete();
+    }
   }
 
   function ConflictSetRemote() {
@@ -124,7 +130,9 @@ export default function ({ setItemRef, id, onUpdate }) {
     const { ver, val } = getLocal();
     setLocal({ ref: ver_remote, ver, val });
     update_frame_state();
-    onUpdate();
+    if (val.length <= val_length_limit) {
+      onUpdate();
+    }
   }
 
   setItemRef({
@@ -165,9 +173,11 @@ export default function ({ setItemRef, id, onUpdate }) {
             onMove(id, id_new);
           }
         } else {
-          setRemote(null);
-          setLocal(null);
-          onRemove(id);
+          if (onRemove) {
+            setRemote(null);
+            setLocal(null);
+            onRemove(id);
+          }
         }
       } else {
         if (remote.id_new) {

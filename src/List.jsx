@@ -20,6 +20,7 @@ const max_list_length = 6;
 const min_sync_interval = 15 * 1000;
 const check_sync_interval = 3 * 60 * 1000;
 const op_delay_interval = 3 * 60 * 1000;
+const delete_delay_interval = 1 * 60 * 1000;
 const idle_sync_interval = 10 * 60 * 1000;
 
 export default function ({ token, setToken, getMenuRef, setListRef }) {
@@ -32,11 +33,18 @@ export default function ({ token, setToken, getMenuRef, setListRef }) {
       manager: null,
       enabled: false,
       syncing: false,
+      deleting_item_buffer: [],
       new_item_buffer: [],
       time: 0,
       next: 0,
     }
   });
+
+  function set_next_sync_time(next) {
+    sync_state.next = next;
+    getMenuRef().setNext(next);
+  }
+  set_next_sync_time(sync_state.next);
 
   sync_state.manager = (function () {
     function enable() {
@@ -64,9 +72,7 @@ export default function ({ token, setToken, getMenuRef, setListRef }) {
       if (sync_state.syncing) {
         return;
       }
-      getMenuRef().setSyncing(sync_state.syncing = true);
       await sync();
-      getMenuRef().setSyncing(sync_state.syncing = false);
     }
 
     async function prepare_sync() {
@@ -83,7 +89,15 @@ export default function ({ token, setToken, getMenuRef, setListRef }) {
 
     function op() {
       if (sync_state.enabled) {
-        sync_state.next = Date.now() + op_delay_interval;
+        set_next_sync_time(Date.now() + op_delay_interval);
+      }
+    }
+
+    function ensure_delete_delay() {
+      if (sync_state.enabled) {
+        if (sync_state.next - Date.now() < delete_delay_interval) {
+          set_next_sync_time(Date.now() + delete_delay_interval);
+        }
       }
     }
 
@@ -92,7 +106,8 @@ export default function ({ token, setToken, getMenuRef, setListRef }) {
       disable,
       do_sync,
       prepare_sync,
-      op
+      op,
+      ensure_delete_delay
     }
   })();
 
@@ -131,17 +146,28 @@ export default function ({ token, setToken, getMenuRef, setListRef }) {
     }
   }, [token]);
 
-  function onCreate() {
+  function onCreate(index) {
     const id = generate_local_id();
     setList([...list, id]);
     if (sync_state.syncing) {
       sync_state.new_item_buffer.push(id);
     }
-    sync_state.manager.op();
+    if (index < max_list_length) {
+      sync_state.manager.op();
+    }
   }
 
-  function onUpdate() {
-    sync_state.manager.op();
+  function onUpdate(index) {
+    if (index < max_list_length) {
+      sync_state.manager.op();
+    }
+  }
+
+  function onDelete(id) {
+    if (sync_state.syncing) {
+      sync_state.deleting_item_buffer.push(id);
+    }
+    sync_state.manager.ensure_delete_delay();
   }
 
   async function fetch_sync(token, body) {
@@ -166,7 +192,7 @@ export default function ({ token, setToken, getMenuRef, setListRef }) {
         return await response.json();
       }
     } catch (error) {
-      getMenuRef().onSync(false);
+      getMenuRef().onSync(0);
       return null;
     }
   }
@@ -181,10 +207,17 @@ export default function ({ token, setToken, getMenuRef, setListRef }) {
       }
     });
 
+    getMenuRef().setSyncing(sync_state.syncing = true);
     const remote = await fetch_sync(token, local);
+    getMenuRef().setSyncing(sync_state.syncing = false);
+    
     if (!remote || !sync_state.enabled) {
       return;
     }
+
+    sync_state.time = Date.now();
+    getMenuRef().onSync(sync_state.time);
+    set_next_sync_time(sync_state.time + idle_sync_interval);
 
     let list_add = [];
     let set_delete = new Set();
@@ -204,18 +237,26 @@ export default function ({ token, setToken, getMenuRef, setListRef }) {
     }
 
     let current_item_set = list.reduce((set, id) => set.add(id), new Set());
+
     let new_item_list = remote.filter(item => {
-      if (current_item_set.has(item.id)) {
-        current_item_set.delete(item.id);
-        item_map.get(item.id).merge(item, onMove, onRemove);
+      if (current_item_set.delete(item.id)) {
+        item_map.get(item.id).merge(item, onMove);
         return false;
       }
       return true;
     });
 
+    sync_state.deleting_item_buffer.forEach(id => {
+      if (current_item_set.delete(id)) {
+        item_map.get(id).merge(null, onMove);
+      }
+    });
+    sync_state.deleting_item_buffer = [];
+
     current_item_set.forEach(id => {
       item_map.get(id).merge(null, onMove, onRemove);
     });
+
     new_item_list.forEach(({ id, ver, val }) => {
       const [, setRemoteNew] = localJson(key_remote(id));
       const [, setLocalNew] = localJson(key_local(id));
@@ -226,12 +267,6 @@ export default function ({ token, setToken, getMenuRef, setListRef }) {
 
     setList([...list.filter(id => !set_delete.has(id)), ...list_add, ...sync_state.new_item_buffer].sort());
     sync_state.new_item_buffer = [];
-
-    getMenuRef().onSync(true);
-    sync_state.time = Date.now();
-    if (sync_state.next <= Date.now()) {
-      sync_state.next = Date.now() + idle_sync_interval;
-    }
   }
 
   const Error = () => {
@@ -282,19 +317,20 @@ export default function ({ token, setToken, getMenuRef, setListRef }) {
       <Error />
       <div className='list'>
         {
-          list.map(id => (
+          list.map((id, index) => (
             <Item
               key={id}
               setItemRef={val => item_map.set(id, val)}
               id={id}
-              onUpdate={onUpdate}
+              onUpdate={() => onUpdate(index)}
+              onDelete={() => onDelete(id)}
             />
           ))
         }
         <Length />
       </div>
       <PositionFixed right='20px' bottom='20px'>
-        <IconButton icon={<AddIcon />} title={<Text id='list.create.tooltip' />} onClick={onCreate} />
+        <IconButton icon={<AddIcon />} title={<Text id='list.create.tooltip' />} onClick={() => onCreate(list.length)} />
       </PositionFixed>
     </React.Fragment>
   )

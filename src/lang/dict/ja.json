@@ -48,5 +48,6 @@
   "menu.online.tooltip": "オンライン",
   "menu.setting.tooltip": "設定",
   "menu.signup.button": "サインアップ",
-  "menu.sync.tooltip": "同期"
+  "menu.sync.tooltip": "今すぐ同期",
+  "menu.sync.next.tooltip": "同期予定時間:"
 }

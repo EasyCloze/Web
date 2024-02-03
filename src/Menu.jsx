@@ -16,6 +16,7 @@ import './Menu.css';
 
 export default function ({ token, setToken, setMenuRef, getListRef }) {
   const [time, setTime] = useLocalStateJson('lastSyncTime');
+  const [next, setNext] = useState(0);
   const [online, setOnline] = useLocalStateJson('online');
   const [syncing, setSyncing] = useState(false);
   const [getDialogRef, setDialogRef] = useRefGetSet();
@@ -23,7 +24,8 @@ export default function ({ token, setToken, setMenuRef, getListRef }) {
   setMenuRef({
     time,
     setSyncing,
-    onSync: succeeded => { succeeded ? (setTime(Date.now()), setOnline(true)) : setOnline(null) },
+    setNext,
+    onSync: time => { time ? (setTime(time), setOnline(true)) : setOnline(null) },
   });
 
   useEffect(() => {
@@ -60,7 +62,25 @@ export default function ({ token, setToken, setMenuRef, getListRef }) {
                   {
                     syncing ?
                       <CircularProgress size='20px' /> :
-                      <IconButton icon={<SyncIcon />} title={<Text id='menu.sync.tooltip' />} onClick={() => getListRef().sync()} />
+                      <IconButton
+                        icon={<SyncIcon />}
+                        title={
+                          <div style={{ textAlign: 'center' }}>
+                            <Text id='menu.sync.tooltip' />
+                            {
+                              next ? (
+                                <React.Fragment>
+                                  <br />
+                                  <div style={{ fontStyle: 'italic', paddingTop: '5px' }}>
+                                    *<Text id='menu.sync.next.tooltip' /> {new Date(next).toLocaleString()}
+                                  </div>
+                                </React.Fragment>
+                              ) : ('')
+                            }
+                          </div>
+                        }
+                        onClick={() => getListRef().sync()}
+                      />
                   }
                 </React.Fragment>
               )
