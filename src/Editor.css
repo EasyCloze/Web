@@ -10,7 +10,7 @@
 
 .mark {
   outline: 2px solid orange;
-  animation: blink 1s steps(2, end) 60s infinite;
+  animation: blink 1s steps(2, end) 60s 60;
 }
 
 .mark:hover {
