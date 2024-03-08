@@ -47,7 +47,8 @@
   "menu.offline.tooltip": "离线",
   "menu.online.tooltip": "在线",
   "menu.setting.tooltip": "设置",
+  "menu.show.tooltip": "全部显示/隐藏",
   "menu.signup.button": "注册",
-  "menu.sync.tooltip": "立即同步",
-  "menu.sync.next.tooltip": "计划同步时间:"
+  "menu.sync.next.tooltip": "计划同步时间:",
+  "menu.sync.tooltip": "立即同步"
 }

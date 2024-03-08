@@ -47,7 +47,8 @@
   "menu.offline.tooltip": "offline",
   "menu.online.tooltip": "online",
   "menu.setting.tooltip": "Einstellung",
+  "menu.show.tooltip": "alle anzeigen/ausblenden",
   "menu.signup.button": "anmelden",
-  "menu.sync.tooltip": "jetzt synchronisieren",
-  "menu.sync.next.tooltip": "geplante Synchronisationszeit:"
+  "menu.sync.next.tooltip": "geplante Synchronisationszeit:",
+  "menu.sync.tooltip": "jetzt synchronisieren"
 }

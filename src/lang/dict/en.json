@@ -47,7 +47,8 @@
   "menu.offline.tooltip": "offline",
   "menu.online.tooltip": "online",
   "menu.setting.tooltip": "setting",
+  "menu.show.tooltip": "show/hide all",
   "menu.signup.button": "sign up",
-  "menu.sync.tooltip": "sync now",
-  "menu.sync.next.tooltip": "scheduled sync time:"
+  "menu.sync.next.tooltip": "scheduled sync time:",
+  "menu.sync.tooltip": "sync now"
 }
