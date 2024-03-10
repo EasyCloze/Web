@@ -10,7 +10,7 @@
 
 .mark {
   outline: 2px solid orange;
-  animation: blink 1s steps(2, end) 60s 60;
+  animation: blink 1s steps(2, end) 60s 60, blink-slow 2.5s 120s infinite;
 }
 
 .mark:hover {
@@ -20,5 +20,62 @@
 @keyframes blink {
   to {
     outline: none;
+  }
+}
+
+@keyframes blink-slow {
+
+  0%,
+  100% {
+    outline-color: color-mix(in srgb, orange, transparent 0%);
+  }
+
+  5%,
+  95% {
+    outline-color: color-mix(in srgb, orange, transparent 0%);
+  }
+
+  10%,
+  90% {
+    outline-color: color-mix(in srgb, orange, transparent 10%);
+  }
+
+  15%,
+  85% {
+    outline-color: color-mix(in srgb, orange, transparent 20%);
+  }
+
+  20%,
+  80% {
+    outline-color: color-mix(in srgb, orange, transparent 30%);
+  }
+
+  25%,
+  75% {
+    outline-color: color-mix(in srgb, orange, transparent 40%);
+  }
+
+  30%,
+  70% {
+    outline-color: color-mix(in srgb, orange, transparent 50%);
+  }
+
+  35%,
+  65% {
+    outline-color: color-mix(in srgb, orange, transparent 60%);
+  }
+
+  40%,
+  60% {
+    outline-color: color-mix(in srgb, orange, transparent 70%);
+  }
+
+  45%,
+  55% {
+    outline-color: color-mix(in srgb, orange, transparent 80%);
+  }
+
+  50% {
+    outline-color: color-mix(in srgb, orange, transparent 90%);
   }
 }
