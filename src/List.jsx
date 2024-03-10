@@ -44,7 +44,10 @@ export default function ({ token, setToken, getMenuRef, setListRef }) {
     sync_state.next = next;
     getMenuRef().setNext(next);
   }
-  set_next_sync_time(sync_state.next);
+
+  useEffect(() => {
+    set_next_sync_time(sync_state.next);
+  });
 
   sync_state.manager = (function () {
     function enable() {
@@ -210,7 +213,7 @@ export default function ({ token, setToken, getMenuRef, setListRef }) {
     getMenuRef().setSyncing(sync_state.syncing = true);
     const remote = await fetch_sync(token, local);
     getMenuRef().setSyncing(sync_state.syncing = false);
-    
+
     if (!remote || !sync_state.enabled) {
       return;
     }
@@ -303,7 +306,7 @@ export default function ({ token, setToken, getMenuRef, setListRef }) {
 
     return (
       <Tooltip title={overlength && <Text id='list.length.tooltip' />}>
-        <div id='list-length' class={overlength && 'overlength'}>- {<Text id='list.length.text' />} {list.length} -</div>
+        <div id='list-length' className={overlength && 'overlength'}>- {<Text id='list.length.text' />} {list.length} -</div>
       </Tooltip>
     )
   }
