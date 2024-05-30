@@ -79,3 +79,9 @@
     outline-color: color-mix(in srgb, orange, transparent 90%);
   }
 }
+
+@media print {
+  .mark {
+    outline: none;
+  }
+}
