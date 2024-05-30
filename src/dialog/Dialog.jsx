@@ -1,5 +1,6 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useLocalRef } from '../utility/localRef';
+import Text from '../lang/Text';
 import Message from '../widget/Message';
 import Setting from './Setting';
 import About from './About';
@@ -15,6 +16,10 @@ export default function ({ setDialogRef, token, setToken }) {
   const [error, setError] = useState(null);
 
   setDialogRef({ setDialog });
+
+  useEffect(() => {
+    setError(null);
+  }, [dialog]);
 
   function current_dialog() {
     switch (dialog) {
