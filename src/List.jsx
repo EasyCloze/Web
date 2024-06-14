@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import AddIcon from '@mui/icons-material/Add';
 import Tooltip from '@mui/material/Tooltip';
 import { localJson } from './utility/local';
@@ -316,7 +316,7 @@ export default function ({ token, setToken, getMenuRef, setListRef }) {
   });
 
   return (
-    <React.Fragment>
+    <>
       <Error />
       <div className='list'>
         {
@@ -335,6 +335,6 @@ export default function ({ token, setToken, getMenuRef, setListRef }) {
       <PositionFixed right='20px' bottom='20px'>
         <IconButton icon={<AddIcon />} title={<Text id='list.create.tooltip' />} onClick={() => onCreate(list.length)} />
       </PositionFixed>
-    </React.Fragment>
+    </>
   )
 }

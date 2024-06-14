@@ -1,3 +1,7 @@
+p {
+  margin: 0;
+}
+
 .hidden {
   color: transparent;
   caret-color: black;
@@ -8,12 +12,12 @@
   color: inherit;
 }
 
-.mark {
+.hidden[data-mark="true"] {
   outline: 2px solid orange;
   animation: blink 1s steps(2, end) 60s 60, blink-slow 2.5s 120s infinite;
 }
 
-.mark:hover {
+.hidden[data-mark="true"]:hover {
   animation: none;
 }
 

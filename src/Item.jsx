@@ -1,6 +1,8 @@
-import React, { useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import DeleteIcon from '@mui/icons-material/Delete';
 import RestoreIcon from '@mui/icons-material/Restore';
+import UndoIcon from '@mui/icons-material/Undo';
+import RedoIcon from '@mui/icons-material/Redo';
 import { localJson } from './utility/local';
 import { useLocalRefJson } from './utility/localRef';
 import { useRefGetSet } from './utility/refGetSet';
@@ -15,10 +17,10 @@ import PositionFixed from './widget/PositionFixed';
 import Editor from './Editor';
 import './Item.css';
 
-const val_length_limit = 3000;
+const val_length_limit = 4096;
 
 export default function ({ setItemRef, id, onUpdate, onDelete }) {
-  const [getRemote, setRemote] = useLocalRefJson(key_remote(id), { ver: 0, val: JSON.stringify([{ children: [{ text: '' }] }]) });
+  const [getRemote, setRemote] = useLocalRefJson(key_remote(id), { ver: 0, val: null });
   const [getLocal, setLocal] = useLocalRefJson(key_local(id), { ref: 0, ver: 0, val: null });
   const [getTemp, setTemp] = useRefGetSet({ ver: 0, val: null });
 
@@ -76,10 +78,8 @@ export default function ({ setItemRef, id, onUpdate, onDelete }) {
 
   useEffect(() => {
     if (getLocal().ver === 0) {
-      getEditorRef().setFocus();
-      setLocal({ ref: 0, ver: current_version(), val: getRemote().val });
+      getEditorRef().focus();
     }
-    update_frame_state();
   });
 
   function RefreshLocal() {
@@ -90,7 +90,7 @@ export default function ({ setItemRef, id, onUpdate, onDelete }) {
     update_frame_state();
   }
 
-  function onChange(val) {
+  function setContent(val) {
     setLocal({ ref: getLocal().ref, ver: current_version(), val });
     RefreshLocal();
     if (val.length <= val_length_limit) {
@@ -98,8 +98,16 @@ export default function ({ setItemRef, id, onUpdate, onDelete }) {
     }
   }
 
+  function Undo() {
+    getEditorRef().undo();
+  }
+
+  function Redo() {
+    getEditorRef().redo();
+  }
+
   function Revert() {
-    getEditorRef().setValue(JSON.parse(getRemote().val));
+    getEditorRef().updateValue(getRemote().val);
   }
 
   function DeleteOrRestore() {
@@ -219,6 +227,8 @@ export default function ({ setItemRef, id, onUpdate, onDelete }) {
       getRemote={getRemote}
       getLocal={getLocal}
       command={{
+        Undo,
+        Redo,
         Revert,
         DeleteOrRestore,
         ConflictDelete,
@@ -227,10 +237,12 @@ export default function ({ setItemRef, id, onUpdate, onDelete }) {
       }}
     >
       <Editor
+        initialContent={getLocal().val || getRemote().val}
         setEditorRef={setEditorRef}
-        getValue={() => JSON.parse(getLocal().val || getRemote().val)}
-        onChange={value => onChange(JSON.stringify(value))}
-        onFocusChange={focused => getFrameRef().setFocused(focused)}
+        setContent={setContent}
+        setFocus={focused => getFrameRef().setFocused(focused)}
+        setCanUndo={canUndo => getFrameRef().setCanUndo(canUndo)}
+        setCanRedo={canRedo => getFrameRef().setCanRedo(canRedo)}
       />
     </Frame>
   )
@@ -238,10 +250,14 @@ export default function ({ setItemRef, id, onUpdate, onDelete }) {
 
 const Frame = ({ setFrameRef, getRemote, getLocal, children, command }) => {
   const [focused, setFocused] = useState(false);
+  const [canUndo, setCanUndo] = useState(false);
+  const [canRedo, setCanRedo] = useState(false);
   const [state, setState] = useState('normal');
 
   setFrameRef({
     setFocused,
+    setCanRedo,
+    setCanUndo,
     setState,
   });
 
@@ -308,7 +324,6 @@ const Frame = ({ setFrameRef, getRemote, getLocal, children, command }) => {
       case 'deleted created':
       case 'deleted updated':
         return null;
-      case 'conflict deleted':
       case 'conflict updated':
         return (
           <div
@@ -318,7 +333,7 @@ const Frame = ({ setFrameRef, getRemote, getLocal, children, command }) => {
             <div style={{ flex: 1 }}>
               <Label>{get_version_date(getRemote().ver)} <Text id='item.conflict.remote.text' /></Label>
               <div className='item-diff-frame' onClick={event => event.stopPropagation()}>
-                <Editor readonly getValue={() => JSON.parse(getRemote().val)} />
+                <Editor readonly initialContent={getRemote().val} />
               </div>
             </div>
             <div style={{ flex: 1 }}>
@@ -348,11 +363,11 @@ const Frame = ({ setFrameRef, getRemote, getLocal, children, command }) => {
         case 'conflict deleted':
         case 'conflict updated':
           return (
-            <React.Fragment>
+            <>
               <Button onClick={command.ConflictSetRemote} ><Text id='item.action.keep_remote.button' /></Button>
               <Placeholder width='2px' />
               <Button onClick={command.ConflictSetLocal} ><Text id='item.action.keep_local.button' /></Button>
-            </React.Fragment>
+            </>
           )
         case 'conflict missing':
           return <Button onClick={command.ConflictSetLocal} ><Text id='item.action.create.button' /></Button>
@@ -375,21 +390,32 @@ const Frame = ({ setFrameRef, getRemote, getLocal, children, command }) => {
     function current_commands() {
       switch (state) {
         case 'normal':
-          return <IconButton icon={<DeleteIcon htmlColor="lightcoral" />} title={<Text id='item.command.delete.tooltip' />} onClick={command.DeleteOrRestore} />
-        case 'conflict deleted':
-        case 'conflict updated':
-        case 'conflict missing':
-          return <IconButton icon={<DeleteIcon htmlColor="lightcoral" />} title={<Text id='item.command.delete.tooltip' />} onClick={command.ConflictDelete} />
         case 'created':
         case 'updated':
         case 'created invalid':
         case 'updated invalid':
           return (
-            <React.Fragment>
+            <>
               <IconButton icon={<DeleteIcon htmlColor="lightcoral" />} title={<Text id='item.command.delete.tooltip' />} onClick={command.DeleteOrRestore} />
               <Placeholder width='10px' />
-              <IconButton icon={<RestoreIcon />} title={<Text id='item.command.revert.tooltip' />} onClick={command.Revert} />
-            </React.Fragment>
+              <IconButton icon={<UndoIcon />} disabled={!canUndo} title={<Text id='item.command.undo.tooltip' />} onClick={command.Undo} />
+              <Placeholder width='10px' />
+              <IconButton icon={<RedoIcon />} disabled={!canRedo} title={<Text id='item.command.redo.tooltip' />} onClick={command.Redo} />
+              <Placeholder width='10px' />
+              <IconButton icon={<RestoreIcon />} disabled={state === 'normal'} title={<Text id='item.command.revert.tooltip' />} onClick={command.Revert} />
+            </>
+          )
+        case 'conflict deleted':
+        case 'conflict updated':
+        case 'conflict missing':
+          return (
+            <>
+              <IconButton icon={<DeleteIcon htmlColor="lightcoral" />} title={<Text id='item.command.delete.tooltip' />} onClick={command.ConflictDelete} />
+              <Placeholder width='10px' />
+              <IconButton icon={<UndoIcon />} disabled={!canUndo} title={<Text id='item.command.undo.tooltip' />} onClick={command.Undo} />
+              <Placeholder width='10px' />
+              <IconButton icon={<RedoIcon />} disabled={!canRedo} title={<Text id='item.command.redo.tooltip' />} onClick={command.Redo} />
+            </>
           )
         case 'deleted normal':
         case 'deleted created':

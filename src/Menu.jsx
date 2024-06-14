@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import AppBar from '@mui/material/AppBar';
 import Toolbar from '@mui/material/Toolbar';
 import Tooltip from '@mui/material/Tooltip';
@@ -59,7 +59,7 @@ export default function ({ token, setToken, setMenuRef, getListRef }) {
   }, [token]);
 
   return (
-    <React.Fragment>
+    <>
       <Slide appear={false} direction="down" in={!scrollTrigger}>
         <AppBar position='fixed'>
           <Toolbar variant='dense' className='menu'>
@@ -72,13 +72,13 @@ export default function ({ token, setToken, setMenuRef, getListRef }) {
             <div style={{ display: 'flex', flexDirection: 'row', alignItems: 'center' }}>
               {
                 !token ? (
-                  <React.Fragment>
+                  <>
                     <Button onClick={() => getDialogRef().setDialog('signup')} ><Text id='menu.signup.button' /></Button>
                     <Placeholder width='5px' />
                     <Button onClick={() => getDialogRef().setDialog('login')} ><Text id='menu.login.button' /></Button>
-                  </React.Fragment>
+                  </>
                 ) : (
-                  <React.Fragment>
+                  <>
                     <Tooltip title={<Text id={online ? 'menu.online.tooltip' : 'menu.offline.tooltip'} />}>
                       <div style={{ backgroundColor: online ? 'mediumseagreen' : 'lightcoral', borderRadius: '50%', width: '15px', height: '15px' }}></div>
                     </Tooltip>
@@ -97,12 +97,12 @@ export default function ({ token, setToken, setMenuRef, getListRef }) {
                               <Text id='menu.sync.tooltip' />
                               {
                                 next ? (
-                                  <React.Fragment>
+                                  <>
                                     <br />
                                     <div style={{ fontStyle: 'italic', paddingTop: '5px' }}>
                                       *<Text id='menu.sync.next.tooltip' /> {new Date(next).toLocaleString()}
                                     </div>
-                                  </React.Fragment>
+                                  </>
                                 ) : ('')
                               }
                             </div>
@@ -110,7 +110,7 @@ export default function ({ token, setToken, setMenuRef, getListRef }) {
                           onClick={() => getListRef().sync()}
                         />
                     }
-                  </React.Fragment>
+                  </>
                 )
               }
             </div>
@@ -118,6 +118,6 @@ export default function ({ token, setToken, setMenuRef, getListRef }) {
         </AppBar>
       </Slide>
       <Dialog setDialogRef={setDialogRef} token={token} setToken={setToken} />
-    </React.Fragment>
+    </>
   )
 }
