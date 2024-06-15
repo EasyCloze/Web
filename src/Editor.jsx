@@ -120,7 +120,10 @@ const State = ({ setEditorRef, setFocus, setCanUndo, setCanRedo }) => {
     const unregisterHistory = registerHistory(editor, createEmptyHistoryState(), 500);
 
     const root = editor.getRootElement();
-    root.onmousemove = event => editor.mouse = { x: event.clientX, y: event.clientY };
+    root.ontouchstart =
+    root.ontouchmove = event => { const touch = event.targetTouches[0]; editor.mouse = { x: touch.clientX, y: touch.clientY }; }
+    root.onmousedown =
+    root.onmousemove = event => { editor.mouse = { x: event.clientX, y: event.clientY }; }
     root.onfocus = () => { setFocus(true); }
     root.onblur = () => { setToolbarState({ show: false }); setFocus(false); }
     root.onkeydown = event => {
@@ -133,8 +136,6 @@ const State = ({ setEditorRef, setFocus, setCanUndo, setCanRedo }) => {
         event.preventDefault();
       }
     }
-
-    editor.mouse = { x: 0, y: 0 };
 
     editor.registerUpdateListener(({ editorState }) => {
       editorState.read(() => {
