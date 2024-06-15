@@ -21,6 +21,7 @@
   "item.action.keep_local.button": "lokal behalten",
   "item.action.keep_remote.button": "remote behalten",
   "item.action.restore.button": "wiederherstellen",
+  "item.action.select.button": "Alles auswählen",
   "item.command.delete.tooltip": "löschen",
   "item.command.redo.tooltip": "wiederholen",
   "item.command.revert.tooltip": "alle Änderungen zurücksetzen",

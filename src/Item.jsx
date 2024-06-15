@@ -13,6 +13,8 @@ import Button from './widget/Button';
 import Message from './widget/Message';
 import Label from './widget/Label';
 import Placeholder from './widget/Placeholder';
+import PositionRelative from './widget/PositionRelative';
+import PositionAbsolute from './widget/PositionAbsolute';
 import PositionFixed from './widget/PositionFixed';
 import Editor from './Editor';
 import './Item.css';
@@ -96,6 +98,10 @@ export default function ({ setItemRef, id, onUpdate, onDelete }) {
     if (val.length <= val_length_limit) {
       onUpdate();
     }
+  }
+
+  function SelectAll() {
+    getEditorRef().selectAll();
   }
 
   function Undo() {
@@ -227,6 +233,7 @@ export default function ({ setItemRef, id, onUpdate, onDelete }) {
       getRemote={getRemote}
       getLocal={getLocal}
       command={{
+        SelectAll,
         Undo,
         Redo,
         Revert,
@@ -382,6 +389,18 @@ const Frame = ({ setFrameRef, getRemote, getLocal, children, command }) => {
     return <div style={{ marginTop: '5px' }}>{actions}</div>
   }
 
+  const ToolBar = () => {
+    if (!focused) {
+      return null;
+    }
+
+    return (
+      <PositionAbsolute style={{ right: '5px', top: 'calc(100% - 8px)' }}>
+        <Button className='button' onMouseDown={command.SelectAll} ><Text id='item.action.select.button' /></Button>
+      </PositionAbsolute>
+    );
+  }
+
   const CommandBar = () => {
     if (!focused) {
       return null;
@@ -437,14 +456,16 @@ const Frame = ({ setFrameRef, getRemote, getLocal, children, command }) => {
   }
 
   return (
-    <div
+    <PositionRelative
       className={'item'}
+      zIndex='auto'
       style={{ borderColor: current_border_color() }}
     >
       <MessageBar />
       {current_content()}
       <ActionBar />
+      <ToolBar />
       <CommandBar />
-    </div>
+    </PositionRelative>
   )
 }

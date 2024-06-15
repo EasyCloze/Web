@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { $getSelection, $setSelection, $isRangeSelection, $createRangeSelection, TextNode, createCommand, COMMAND_PRIORITY_LOW, UNDO_COMMAND, REDO_COMMAND, CAN_UNDO_COMMAND, CAN_REDO_COMMAND } from 'lexical';
+import { $getSelection, $setSelection, $selectAll, $isRangeSelection, $createRangeSelection, TextNode, createCommand, COMMAND_PRIORITY_LOW, UNDO_COMMAND, REDO_COMMAND, CAN_UNDO_COMMAND, CAN_REDO_COMMAND } from 'lexical';
 import { LexicalComposer } from '@lexical/react/LexicalComposer';
 import { useLexicalComposerContext } from '@lexical/react/LexicalComposerContext';
 import { PlainTextPlugin } from '@lexical/react/LexicalPlainTextPlugin';
@@ -109,6 +109,9 @@ const State = ({ setEditorRef, setFocus, setCanUndo, setCanRedo }) => {
         editor.setEditorState(editor.parseEditorState(value));
       });
     },
+    selectAll: () => {
+      editor.update(() => $selectAll());
+    },
     redo,
     undo,
   });
@@ -124,6 +127,7 @@ const State = ({ setEditorRef, setFocus, setCanUndo, setCanRedo }) => {
     root.ontouchmove = event => { const touch = event.targetTouches[0]; editor.mouse = { x: touch.clientX, y: touch.clientY }; }
     root.onmousedown =
     root.onmousemove = event => { editor.mouse = { x: event.clientX, y: event.clientY }; }
+    root.onmouseleave = () => { editor.mouse = undefined; }
     root.onfocus = () => { setFocus(true); }
     root.onblur = () => { setToolbarState({ show: false }); setFocus(false); }
     root.onkeydown = event => {
@@ -265,8 +269,14 @@ const Toolbar = ({ setToolbarRef }) => {
     const rect = ref.current.getBoundingClientRect();
     const body_rect = document.body.getBoundingClientRect();
     const parent_rect = ref.current.offsetParent.getBoundingClientRect();
-    ref.current.style.left = Math.max(0, Math.min(editor.mouse.x + 20 - body_rect.left, body_rect.width - rect.width)) - (parent_rect.left - body_rect.left) + 'px';
-    ref.current.style.top = Math.max(0, Math.min(editor.mouse.y + 20 - body_rect.top, body_rect.height - rect.height)) - (parent_rect.top - body_rect.top) + 'px';
+    if (editor.mouse) {
+      ref.current.style.left = Math.max(0, Math.min(editor.mouse.x + 20 - body_rect.left, body_rect.width - rect.width)) - (parent_rect.left - body_rect.left) + 'px';
+      ref.current.style.top = Math.max(0, Math.min(editor.mouse.y + 20 - body_rect.top, body_rect.height - rect.height)) - (parent_rect.top - body_rect.top) + 'px';
+    } else {
+      ref.current.style.left = '10px';
+      ref.current.style.top = parent_rect.height - 10 + 'px';
+    }
+    ref.current.style.visibility = 'visible';
   });
 
   function command(name) {
@@ -278,7 +288,7 @@ const Toolbar = ({ setToolbarRef }) => {
       <PositionAbsolute
         innerRef={ref}
         zIndex='2048'
-        style={{ display: 'flex' }}
+        style={{ display: 'flex', visibility: 'hidden' }}
         onMouseDown={event => event.preventDefault()}
       >
         {

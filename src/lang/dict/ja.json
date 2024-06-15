@@ -21,6 +21,7 @@
   "item.action.keep_local.button": "ローカルを保持",
   "item.action.keep_remote.button": "リモートを保持",
   "item.action.restore.button": "復元",
+  "item.action.select.button": "すべて選択",
   "item.command.delete.tooltip": "削除",
   "item.command.redo.tooltip": "やり直す",
   "item.command.revert.tooltip": "全ての変更を取り消す",
