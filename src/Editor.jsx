@@ -3,6 +3,7 @@ import { $getSelection, $setSelection, $selectAll, $isRangeSelection, $createRan
 import { LexicalComposer } from '@lexical/react/LexicalComposer';
 import { useLexicalComposerContext } from '@lexical/react/LexicalComposerContext';
 import { PlainTextPlugin } from '@lexical/react/LexicalPlainTextPlugin';
+import { RichTextPlugin } from '@lexical/react/LexicalRichTextPlugin';
 import { ContentEditable } from '@lexical/react/LexicalContentEditable';
 import { OnChangePlugin } from '@lexical/react/LexicalOnChangePlugin';
 import { registerHistory, createEmptyHistoryState } from '@lexical/history';
@@ -31,7 +32,7 @@ export default function Editor({ readonly, initialContent, setEditorRef, setCont
 
   return (
     <LexicalComposer initialConfig={{ editable: !readonly, editorState: initialContent, theme: {}, nodes: [HiddenNode], onError(error) { throw error } }} >
-      <PlainTextPlugin contentEditable={<ContentEditable style={{ outline: 'none' }} />} />
+      <RichTextPlugin contentEditable={<ContentEditable style={{ outline: 'none' }} />} />
       <State setEditorRef={setEditorRef} setFocus={setFocus} setCanUndo={setCanUndo} setCanRedo={setCanRedo} />
       <OnChangePlugin ignoreSelectionChange ignoreHistoryMergeTagChange onChange={onStateChange} />
     </LexicalComposer>
