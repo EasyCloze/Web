@@ -13,6 +13,15 @@
   user-select: text;
 }
 
+.item-toolbar {
+  opacity: 0.3;
+  transition: 0.5s;
+}
+
+.item-toolbar:hover {
+  opacity: 1;
+}
+
 @media print {
   .item {
     border-color: black !important;

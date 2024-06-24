@@ -395,8 +395,8 @@ const Frame = ({ setFrameRef, getRemote, getLocal, children, command }) => {
     }
 
     return (
-      <PositionAbsolute style={{ right: '5px', top: 'calc(100% - 8px)' }}>
-        <Button className='button' onMouseDown={command.SelectAll} ><Text id='item.action.select.button' /></Button>
+      <PositionAbsolute className='item-toolbar' style={{ right: '5px', top: 'calc(100% - 8px)' }}>
+        <Button className='button' onMouseDown={event => { command.SelectAll(); event.preventDefault(); }} ><Text id='item.action.select.button' /></Button>
       </PositionAbsolute>
     );
   }
