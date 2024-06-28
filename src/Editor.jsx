@@ -101,9 +101,6 @@ const State = ({ setEditorRef, setFocus, setCanUndo, setCanRedo }) => {
   setEditorRef({
     focus: () => {
       editor.focus();
-      editor.update(() => {
-        $setSelection($createRangeSelection());
-      });
     },
     updateValue: value => {
       editor.update(() => {
