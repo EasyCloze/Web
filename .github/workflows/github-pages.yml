@@ -34,7 +34,7 @@ jobs:
       - name: Build
         env:
           VITE_API: ${{ vars.API }}
-          VITE_VER: ${{ github.head_ref }}.${{ github.sha }}
+          VITE_VER: ${{ github.ref }}.${{ github.sha }}
         run: npm run build
 
       - name: Setup Pages
