@@ -12,7 +12,12 @@ p {
   color: inherit;
 }
 
-.hidden[data-mark="true"] {
+.hidden[data-mark="true"][data-new="true"] {
+  outline: 2px solid orange;
+  animation: blink-slow 2.5s infinite;
+}
+
+.hidden[data-mark="true"][data-new="false"] {
   outline: 2px solid orange;
   animation: blink 1s steps(2, end) 60s 60, blink-slow 2.5s 120s infinite;
 }

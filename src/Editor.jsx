@@ -63,6 +63,8 @@ class HiddenNode extends TextNode {
     const dom = super.createDOM(config, editor);
     dom.classList.add('hidden');
     dom.dataset.mark = this.mark;
+    dom.dataset.new = true;
+    dom.onmouseleave = () => dom.dataset.new = false;
     return dom;
   }
 
