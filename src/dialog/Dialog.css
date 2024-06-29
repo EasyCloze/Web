@@ -16,4 +16,6 @@
   background-color: white;
   border-radius: 5px;
   padding: 30px;
+  max-width: calc(100% - 100px);
+  overflow-wrap: break-word;
 }
