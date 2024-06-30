@@ -22,7 +22,7 @@ import './Item.css';
 const val_length_limit = 4096;
 
 export default function ({ setItemRef, id, onUpdate, onDelete }) {
-  const [getRemote, setRemote] = useLocalRefJson(key_remote(id), { ver: 0, val: "{\"root\":{\"children\":[{\"children\":[],\"type\":\"paragraph\"}],\"type\":\"root\"}}" });
+  const [getRemote, setRemote] = useLocalRefJson(key_remote(id), { ver: 0, val: "{\"r\":{\"c\":[{\"c\":[],\"i\":0,\"t\":\"p\"}],\"t\":\"r\"}}" });
   const [getLocal, setLocal] = useLocalRefJson(key_local(id), { ref: 0, ver: 0, val: null });
   const [getTemp, setTemp] = useRefGetSet({ ver: 0, val: null });
 

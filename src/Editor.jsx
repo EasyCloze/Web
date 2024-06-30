@@ -17,28 +17,46 @@ import './Editor.css';
 
 const TOOLBAR_COMMAND = createCommand();
 
+const Content = (() => {
+  function inverseObjectMap(obj) {
+    let result = {};
+    for (const [k, v] of Object.entries(obj)) {
+      result[v] = k;
+    }
+    return result;
+  }
+
+  function replaceWithMap(str, map) {
+    return str.replace(new RegExp(Object.keys(map).join('|'), 'g'), matched => map[matched]);
+  }
+
+  const removeKeys = ['detail', 'format', 'mode', 'style', 'direction', 'version', 'textFormat'];
+  const replacementMap = { '\"type\"': '\"t\"', '\"root\"': '\"r\"', '\"paragraph\"': '\"p\"', '\"children\"': '\"c\"', '\"text\"': '\"x\"', '\"indent\"': '\"i\"', '\"hidden\"': '\"h\"' };
+  const inverseReplacementMap = inverseObjectMap(replacementMap);
+
+  return {
+    stringify: content => replaceWithMap(JSON.stringify(content, (key, value) => removeKeys.includes(key) ? undefined : value), replacementMap),
+    parse: content => replaceWithMap(content, inverseReplacementMap),
+  }
+})();
+
 export default function Editor({ readonly, initialContent, setEditorRef, setContent, setFocus, setCanUndo, setCanRedo }) {
   if (readonly) {
     return (
-      <LexicalComposer initialConfig={{ editable: !readonly, editorState: initialContent, theme: {}, nodes: [HiddenNode], onError(error) { throw error } }} >
+      <LexicalComposer initialConfig={{ editable: !readonly, editorState: Content.parse(initialContent), theme: {}, nodes: [HiddenNode], onError(error) { throw error } }} >
         <PlainTextPlugin contentEditable={<ContentEditable style={{ outline: 'none' }} />} />
       </LexicalComposer>
     )
+  } else {
+    return (
+      <LexicalComposer initialConfig={{ editable: !readonly, editorState: Content.parse(initialContent), theme: {}, nodes: [HiddenNode], onError(error) { throw error } }} >
+        <RichTextPlugin contentEditable={<ContentEditable style={{ outline: 'none' }} />} />
+        <State setEditorRef={setEditorRef} setFocus={setFocus} setCanUndo={setCanUndo} setCanRedo={setCanRedo} />
+        <OnChangePlugin ignoreSelectionChange ignoreHistoryMergeTagChange onChange={editorState => setContent(Content.stringify(editorState.toJSON()))} />
+        <TabIndentationPlugin />
+      </LexicalComposer>
+    )
   }
-
-  function onStateChange(editorState) {
-    const removeKeys = ['detail', 'format', 'mode', 'style', 'direction', 'indent', 'version', 'textFormat'];
-    setContent(JSON.stringify(editorState.toJSON(), (key, value) => removeKeys.includes(key) ? undefined : value));
-  }
-
-  return (
-    <LexicalComposer initialConfig={{ editable: !readonly, editorState: initialContent, theme: {}, nodes: [HiddenNode], onError(error) { throw error } }} >
-      <RichTextPlugin contentEditable={<ContentEditable style={{ outline: 'none' }} />} />
-      <State setEditorRef={setEditorRef} setFocus={setFocus} setCanUndo={setCanUndo} setCanRedo={setCanRedo} />
-      <OnChangePlugin ignoreSelectionChange ignoreHistoryMergeTagChange onChange={onStateChange} />
-      <TabIndentationPlugin />
-    </LexicalComposer>
-  )
 }
 
 class HiddenNode extends TextNode {
@@ -126,9 +144,9 @@ const State = ({ setEditorRef, setFocus, setCanUndo, setCanRedo }) => {
 
     const root = editor.getRootElement();
     root.ontouchstart =
-    root.ontouchmove = event => { const touch = event.targetTouches[0]; editor.mouse = { x: touch.clientX, y: touch.clientY }; }
+      root.ontouchmove = event => { const touch = event.targetTouches[0]; editor.mouse = { x: touch.clientX, y: touch.clientY }; }
     root.onmousedown =
-    root.onmousemove = event => { editor.mouse = { x: event.clientX, y: event.clientY }; }
+      root.onmousemove = event => { editor.mouse = { x: event.clientX, y: event.clientY }; }
     root.onmouseleave = () => { editor.mouse = undefined; }
     root.onfocus = () => { setFocus(true); }
     root.onblur = () => { setToolbarState({ show: false }); setFocus(false); }
