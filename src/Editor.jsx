@@ -1,11 +1,12 @@
 import { useEffect, useRef, useState } from "react";
-import { $getSelection, $setSelection, $selectAll, $isRangeSelection, $createRangeSelection, TextNode, createCommand, COMMAND_PRIORITY_LOW, UNDO_COMMAND, REDO_COMMAND, CAN_UNDO_COMMAND, CAN_REDO_COMMAND } from 'lexical';
+import { $getSelection, $selectAll, $isRangeSelection, TextNode, createCommand, COMMAND_PRIORITY_LOW, UNDO_COMMAND, REDO_COMMAND, CAN_UNDO_COMMAND, CAN_REDO_COMMAND } from 'lexical';
 import { LexicalComposer } from '@lexical/react/LexicalComposer';
 import { useLexicalComposerContext } from '@lexical/react/LexicalComposerContext';
 import { PlainTextPlugin } from '@lexical/react/LexicalPlainTextPlugin';
 import { RichTextPlugin } from '@lexical/react/LexicalRichTextPlugin';
 import { ContentEditable } from '@lexical/react/LexicalContentEditable';
 import { OnChangePlugin } from '@lexical/react/LexicalOnChangePlugin';
+import { TabIndentationPlugin } from '@lexical/react/LexicalTabIndentationPlugin';
 import { registerHistory, createEmptyHistoryState } from '@lexical/history';
 import { useRefGetSet } from './utility/refGetSet';
 import Text from './lang/Text';
@@ -35,6 +36,7 @@ export default function Editor({ readonly, initialContent, setEditorRef, setCont
       <RichTextPlugin contentEditable={<ContentEditable style={{ outline: 'none' }} />} />
       <State setEditorRef={setEditorRef} setFocus={setFocus} setCanUndo={setCanUndo} setCanRedo={setCanRedo} />
       <OnChangePlugin ignoreSelectionChange ignoreHistoryMergeTagChange onChange={onStateChange} />
+      <TabIndentationPlugin />
     </LexicalComposer>
   )
 }
