@@ -124,9 +124,9 @@ const State = ({ setEditorRef, setFocus, setCanUndo, setCanRedo }) => {
     focus: () => {
       editor.focus();
     },
-    updateValue: value => {
+    setContent: content => {
       editor.update(() => {
-        editor.setEditorState(editor.parseEditorState(value));
+        editor.setEditorState(editor.parseEditorState(Content.parse(content)));
       });
     },
     selectAll: () => {

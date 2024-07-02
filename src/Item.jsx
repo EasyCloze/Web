@@ -115,7 +115,7 @@ export default function ({ setItemRef, id, onUpdate, onDelete }) {
   }
 
   function Revert() {
-    getEditorRef().updateValue(getRemote().val);
+    getEditorRef().setContent(getRemote().val);
   }
 
   function DeleteOrRestore() {
