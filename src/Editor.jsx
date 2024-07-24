@@ -130,6 +130,7 @@ const State = ({ setEditorRef, setFocus, setCanUndo, setCanRedo }) => {
       });
     },
     selectAll: () => {
+      editor.mouse = undefined;
       editor.update(() => $selectAll());
     },
     redo,
@@ -147,7 +148,6 @@ const State = ({ setEditorRef, setFocus, setCanUndo, setCanRedo }) => {
       root.ontouchmove = event => { const touch = event.targetTouches[0]; editor.mouse = { x: touch.clientX, y: touch.clientY }; }
     root.onmousedown =
       root.onmousemove = event => { editor.mouse = { x: event.clientX, y: event.clientY }; }
-    root.onmouseleave = () => { editor.mouse = undefined; }
     root.onfocus = () => { setFocus(true); }
     root.onblur = () => { setToolbarState({ show: false }); setFocus(false); }
     root.onkeydown = event => {
@@ -294,7 +294,7 @@ const Toolbar = ({ setToolbarRef }) => {
       ref.current.style.top = Math.max(0, Math.min(editor.mouse.y + 20 - body_rect.top, body_rect.height - rect.height)) - (parent_rect.top - body_rect.top) + 'px';
     } else {
       ref.current.style.left = '10px';
-      ref.current.style.top = parent_rect.height - 10 + 'px';
+      ref.current.style.top = parent_rect.height - 7 + 'px';
     }
     ref.current.style.visibility = 'visible';
   });
