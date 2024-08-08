@@ -58,6 +58,19 @@ export default function ({ token, setToken, setMenuRef, getListRef }) {
     }
   }, [token]);
 
+  useEffect(() => {
+    function handleCtrlS(event) {
+      if (event.ctrlKey && event.key === 's') {
+        event.preventDefault();
+        if (token) {
+          getListRef().sync();
+        }
+      }
+    }
+    document.addEventListener('keydown', handleCtrlS);
+    return () => document.removeEventListener('keydown', handleCtrlS);
+  }, [token]);
+
   return (
     <>
       <Slide appear={false} direction="down" in={!scrollTrigger}>
