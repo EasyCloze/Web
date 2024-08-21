@@ -42,16 +42,16 @@ const Content = (() => {
   }
 })();
 
-export default function Editor({ readonly, initialContent, setEditorRef, setContent, setFocus, setCanUndo, setCanRedo }) {
+export default function Editor({ readonly, getContent, setEditorRef, setContent, setFocus, setCanUndo, setCanRedo }) {
   if (readonly) {
     return (
-      <LexicalComposer initialConfig={{ namespace: 'EasyCloze', editable: !readonly, editorState: Content.parse(initialContent), theme: {}, nodes: [HiddenNode], onError(error) { throw error } }} >
+      <LexicalComposer initialConfig={{ namespace: 'EasyCloze', editable: !readonly, editorState: Content.parse(getContent()), theme: {}, nodes: [HiddenNode], onError(error) { throw error } }} >
         <PlainTextPlugin contentEditable={<ContentEditable style={{ outline: 'none' }} />} />
       </LexicalComposer>
     )
   } else {
     return (
-      <LexicalComposer initialConfig={{ namespace: 'EasyCloze', editable: !readonly, editorState: Content.parse(initialContent), theme: {}, nodes: [HiddenNode], onError(error) { throw error } }} >
+      <LexicalComposer initialConfig={{ namespace: 'EasyCloze', editable: !readonly, editorState: Content.parse(getContent()), theme: {}, nodes: [HiddenNode], onError(error) { throw error } }} >
         <RichTextPlugin contentEditable={<ContentEditable style={{ outline: 'none' }} />} />
         <State setEditorRef={setEditorRef} setFocus={setFocus} setCanUndo={setCanUndo} setCanRedo={setCanRedo} />
         <OnChangePlugin ignoreSelectionChange ignoreHistoryMergeTagChange onChange={editorState => setContent(Content.stringify(editorState.toJSON()))} />

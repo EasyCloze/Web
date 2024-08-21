@@ -246,7 +246,7 @@ export default function ({ setItemRef, id, onUpdate, onDelete }) {
       }}
     >
       <Editor
-        initialContent={getLocal().val || getRemote().val}
+        getContent={() => getLocal().val || getRemote().val}
         setEditorRef={setEditorRef}
         setContent={setContent}
         setFocus={focused => getFrameRef().setFocused(focused)}
@@ -342,7 +342,7 @@ const Frame = ({ setFrameRef, getRemote, getLocal, children, command }) => {
             <div style={{ flex: 1 }}>
               <Label>{get_version_date(getRemote().ver)} <Text id='item.conflict.remote.text' /></Label>
               <div className='item-diff-frame' onClick={event => event.stopPropagation()}>
-                <Editor readonly initialContent={getRemote().val} />
+                <Editor readonly getContent={() => getRemote().val} />
               </div>
             </div>
             <div style={{ flex: 1 }}>
