@@ -1,5 +1,7 @@
 import { useEffect, useRef, useState } from "react";
-import { $getSelection, $selectAll, $isRangeSelection, TextNode, createCommand, COMMAND_PRIORITY_LOW, UNDO_COMMAND, REDO_COMMAND, CAN_UNDO_COMMAND, CAN_REDO_COMMAND } from 'lexical';
+import { $getSelection, $selectAll, $isRangeSelection, TextNode, createCommand, COMMAND_PRIORITY_LOW, UNDO_COMMAND, REDO_COMMAND, CAN_UNDO_COMMAND, CAN_REDO_COMMAND, PASTE_COMMAND } from 'lexical';
+import { objectKlassEquals } from '@lexical/utils'
+import { $generateNodesFromSerializedNodes, $insertGeneratedNodes } from '@lexical/clipboard';
 import { LexicalComposer } from '@lexical/react/LexicalComposer';
 import { useLexicalComposerContext } from '@lexical/react/LexicalComposerContext';
 import { PlainTextPlugin } from '@lexical/react/LexicalPlainTextPlugin';
@@ -195,6 +197,59 @@ const State = ({ setEditorRef, setFocus, setCanUndo, setCanRedo }) => {
         }
       });
     });
+
+    editor.registerCommand(
+      PASTE_COMMAND,
+      (event) => {
+        event.preventDefault();
+        editor.update(() => {
+          const selection = $getSelection();
+          const dataTransfer = objectKlassEquals(event, InputEvent) || objectKlassEquals(event, KeyboardEvent) ? null : event.clipboardData;
+          if (dataTransfer != null && selection !== null) {
+            const lexicalString = dataTransfer.getData('application/x-lexical-editor');
+            if (lexicalString) {
+              try {
+                const payload = JSON.parse(lexicalString);
+                if (payload.namespace === editor._config.namespace && Array.isArray(payload.nodes)) {
+                  payload.nodes.forEach(node => node.style = '')
+                  const nodes = $generateNodesFromSerializedNodes(payload.nodes);
+                  return selection.insertNodes(nodes);
+                }
+              } catch (_) {
+              }
+            }
+            const text = dataTransfer.getData('text/plain') || dataTransfer.getData('text/uri-list');
+            if (text != null) {
+              if ($isRangeSelection(selection)) {
+                const parts = text.split(/(\r?\n|\t)/);
+                if (parts[parts.length - 1] === '') {
+                  parts.pop();
+                }
+                for (let i = 0; i < parts.length; i++) {
+                  const currentSelection = $getSelection();
+                  if ($isRangeSelection(currentSelection)) {
+                    const part = parts[i];
+                    if (part === '\n' || part === '\r\n') {
+                      currentSelection.insertParagraph();
+                    } else if (part === '\t') {
+                      currentSelection.insertNodes([$createTabNode()]);
+                    } else {
+                      currentSelection.insertText(part);
+                    }
+                  }
+                }
+              } else {
+                selection.insertRawText(text);
+              }
+            }
+          }
+        }, {
+          tag: 'paste'
+        });
+        return true;
+      },
+      COMMAND_PRIORITY_LOW,
+    );
 
     editor.registerCommand(
       CAN_UNDO_COMMAND,
