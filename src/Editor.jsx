@@ -33,7 +33,7 @@ const Content = (() => {
   }
 
   const removeKeys = ['detail', 'format', 'mode', 'style', 'direction', 'version', 'textFormat'];
-  const replacementMap = { '\"type\"': '\"t\"', '\"root\"': '\"r\"', '\"paragraph\"': '\"p\"', '\"children\"': '\"c\"', '\"text\"': '\"x\"', '\"indent\"': '\"i\"', '\"hidden\"': '\"h\"' };
+  const replacementMap = { '\"root\"\:': '\"r\"\:', '\"children\"\:': '\"c\"\:', '\"text\"\:': '\"x\"\:', '\"indent\"\:': '\"i\"\:', '\"type\"\:\"root\"': '\"t\"\:\"r\"', '\"type\"\:\"paragraph\"': '\"t\"\:\"p\"', '\"type\"\:\"text\"': '\"t\"\:\"x\"', '\"type\"\:\"hidden\"': '\"t\"\:\"h\"' };
   const inverseReplacementMap = inverseObjectMap(replacementMap);
 
   return {
