@@ -323,6 +323,7 @@ export default function ({ token, setToken, getMenuRef, setListRef }) {
           list.map((id, index) => (
             <Item
               key={id}
+              token={token}
               setItemRef={val => item_map.set(id, val)}
               id={id}
               onUpdate={() => onUpdate(index)}
