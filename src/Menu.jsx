@@ -48,6 +48,7 @@ export default function ({ token, setToken, setMenuRef, getListRef }) {
       throw 'rule name not found';
     }
     window.rules[style_name].style.color = show ? 'inherit' : 'transparent';
+    window.rules[style_name].style.backgroundColor = show ? 'yellow' : 'inherit';
   }, [show]);
 
   useEffect(() => {
