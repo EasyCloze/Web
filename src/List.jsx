@@ -1,4 +1,6 @@
 import { useEffect, useState } from 'react';
+import VerticalAlignTopIcon from '@mui/icons-material/VerticalAlignTop';
+import VerticalAlignBottomIcon from '@mui/icons-material/VerticalAlignBottom';
 import AddIcon from '@mui/icons-material/Add';
 import Tooltip from '@mui/material/Tooltip';
 import { localJson } from './utility/local';
@@ -334,6 +336,8 @@ export default function ({ token, setToken, getMenuRef, setListRef }) {
         <Length />
       </div>
       <PositionFixed right='20px' bottom='20px'>
+        <IconButton icon={<VerticalAlignTopIcon />} title={<Text id='list.scroll_top.tooltip' />} onClick={() => window.scrollTo({ top: 0, behavior: 'instant' })} />
+        <IconButton icon={<VerticalAlignBottomIcon />} title={<Text id='list.scroll_bottom.tooltip' />} onClick={() => window.scrollTo({ top: document.body.scrollHeight, behavior: 'instant' })} />
         <IconButton icon={<AddIcon />} title={<Text id='list.create.tooltip' />} onClick={() => onCreate(list.length)} />
       </PositionFixed>
     </>

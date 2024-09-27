@@ -44,6 +44,8 @@
   "list.error.limit.sync.message": "Too frequent sync requests. Please try again later.",
   "list.length.text": "item count:",
   "list.length.tooltip": "only first 6 items are synced",
+  "list.scroll_bottom.tooltip": "scroll to bottom",
+  "list.scroll_top.tooltip": "scroll to top",
   "menu.last_sync_time.tooltip": "last sync time",
   "menu.login.button": "log in",
   "menu.never_synced.text": "never synced",

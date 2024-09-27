@@ -44,6 +44,8 @@
   "list.error.limit.sync.message": "Zu häufige Synchronisationsanfragen. Bitte versuchen Sie es später erneut.",
   "list.length.text": "Elementanzahl:",
   "list.length.tooltip": "nur die ersten 6 Elemente werden synchronisiert",
+  "list.scroll_bottom.tooltip": "nach unten scrollen",
+  "list.scroll_top.tooltip": "nach oben scrollen",
   "menu.last_sync_time.tooltip": "letzte Synchronisationszeit",
   "menu.login.button": "einloggen",
   "menu.never_synced.text": "noch nie synchronisiert",
