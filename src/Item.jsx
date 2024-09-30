@@ -335,6 +335,7 @@ const Frame = ({ setFrameRef, getRemote, getLocal, children, command }) => {
       case 'deleted created':
       case 'deleted updated':
         return null;
+      case 'conflict deleted':
       case 'conflict updated':
         return (
           <div
