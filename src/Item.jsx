@@ -465,6 +465,9 @@ const Frame = ({ setFrameRef, getRemote, getLocal, children, command }) => {
       className={'item'}
       zIndex='auto'
       style={{ borderColor: current_border_color() }}
+      data-ver-local={getLocal().ver}
+      data-ver-ref={getLocal().ref}
+      data-ver-remote={getRemote().ver}
     >
       <MessageBar />
       {current_content()}
