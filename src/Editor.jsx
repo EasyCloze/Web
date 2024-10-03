@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { $getSelection, $selectAll, $isRangeSelection, TextNode, createCommand, COMMAND_PRIORITY_LOW, UNDO_COMMAND, REDO_COMMAND, CAN_UNDO_COMMAND, CAN_REDO_COMMAND, PASTE_COMMAND } from 'lexical';
+import { $getSelection, $selectAll, $isRangeSelection, $createRangeSelection, $setSelection, TextNode, createCommand, COMMAND_PRIORITY_LOW, UNDO_COMMAND, REDO_COMMAND, CAN_UNDO_COMMAND, CAN_REDO_COMMAND, PASTE_COMMAND } from 'lexical';
 import { objectKlassEquals } from '@lexical/utils';
 import { $generateNodesFromSerializedNodes } from '@lexical/clipboard';
 import { LexicalComposer } from '@lexical/react/LexicalComposer';
@@ -301,19 +301,24 @@ const State = ({ setEditorRef, setFocus, setCanUndo, setCanRedo }) => {
 
         const show_all = () => {
           if (selection.isCollapsed()) {
-            const node = nodes[0];
+            let node = nodes[0];
             let content = node.getTextContent();
+            let offset = selection.getStartEndPoints()[0].offset;
             let prev = node.getPreviousSibling();
             let next = node.getNextSibling();
             if (prev instanceof TextNode && !(prev instanceof HiddenNode)) {
               content = prev.getTextContent() + content;
+              offset = prev.getTextContent().length + offset;
               prev.remove();
             }
             if (next instanceof TextNode && !(next instanceof HiddenNode)) {
               content = content + next.getTextContent();
               next.remove();
             }
-            node.replace(new TextNode(content));
+            node = node.replace(new TextNode(content));
+            let new_selection = $createRangeSelection();
+            new_selection.setTextNodeRange(node, offset, node, offset);
+            $setSelection(new_selection);
           } else {
             nodes.forEach(node => {
               if (node instanceof HiddenNode) {
