@@ -218,6 +218,9 @@ export default function ({ token, setItemRef, id, onUpdate, onDelete }) {
               setRemote({ ver, val: getTemp().val });
               setLocal({ ref: ver, ver: getLocal().ver, val: getLocal().val });
             } else {
+              if (!(getLocal().ver > 0) && !getLocal().val) {
+                setLocal({ ref: getLocal().ref, ver: getLocal().ver, val: getRemote().val });
+              }
               setRemote({ ver, val });
               if (getLocal().ver > 0 && !getLocal().val) {
                 setLocal({ ref: ver, ver: getLocal().ver, val: null });
