@@ -300,22 +300,26 @@ const State = ({ setEditorRef, setFocus, setCanUndo, setCanRedo }) => {
         }
 
         const show_all = () => {
-          let curr = null;
-          nodes.forEach(node => {
-            curr = node;
-            if (curr instanceof HiddenNode) {
-              curr = curr.replace(new TextNode(curr.getTextContent()));
-            }
-            let prev = curr.getPreviousSibling();
+          if (selection.isCollapsed()) {
+            const node = nodes[0];
+            let content = node.getTextContent();
+            let prev = node.getPreviousSibling();
+            let next = node.getNextSibling();
             if (prev instanceof TextNode && !(prev instanceof HiddenNode)) {
-              prev.setTextContent(prev.getTextContent() + curr.getTextContent());
-              curr.remove();
+              content = prev.getTextContent() + content;
+              prev.remove();
             }
-          });
-          let next = curr.getNextSibling();
-          if (next instanceof TextNode && !(next instanceof HiddenNode)) {
-            curr.setTextContent(curr.getTextContent() + next.getTextContent());
-            next.remove();
+            if (next instanceof TextNode && !(next instanceof HiddenNode)) {
+              content = content + next.getTextContent();
+              next.remove();
+            }
+            node.replace(new TextNode(content));
+          } else {
+            nodes.forEach(node => {
+              if (node instanceof HiddenNode) {
+                node.replace(new TextNode(node.getTextContent()));
+              }
+            });
           }
         }
 
