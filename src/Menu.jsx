@@ -27,6 +27,7 @@ export default function ({ token, setToken, setMenuRef, getListRef }) {
 
   setMenuRef({
     time,
+    setShow,
     setSyncing,
     setNext,
     onSync: time => { time ? (setTime(time), setOnline(true)) : setOnline(null) },
@@ -65,7 +66,7 @@ export default function ({ token, setToken, setMenuRef, getListRef }) {
             <div>
               <IconButton icon={<SettingsIcon />} title={<Text id='menu.setting.tooltip' />} onClick={() => getDialogRef().setDialog('setting')} />
               <Tooltip title={<Text id='menu.show.tooltip' />}>
-                <Switch checked={show} onClick={() => setShow(!show)}></Switch>
+                <Switch checked={show} onMouseDown={event => event.preventDefault()} onClick={() => setShow(!show)}></Switch>
               </Tooltip>
             </div>
             <div style={{ display: 'flex', flexDirection: 'row', alignItems: 'center' }}>

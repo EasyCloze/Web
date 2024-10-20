@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useState } from 'react';
 import VerticalAlignTopIcon from '@mui/icons-material/VerticalAlignTop';
 import VerticalAlignBottomIcon from '@mui/icons-material/VerticalAlignBottom';
 import AddIcon from '@mui/icons-material/Add';
@@ -26,10 +26,16 @@ const delete_delay_interval = 1 * 60 * 1000;
 const idle_sync_interval = 10 * 60 * 1000;
 
 export default function ({ token, setToken, getMenuRef, setListRef }) {
-  const ref = useRef();
   const [list, setList] = useLocalStateJson('list', []);
   const [getErrorRef, setErrorRef] = useRefGetSet();
   const [getLengthRef, setLengthRef] = useRefGetSet();
+  const show = useRefObj(() => {
+    return {
+      value: false,
+      setShow: value => getMenuRef().setShow(show.value = value),
+      updateShow: () => {},
+    }
+  });
   const item_map = useRefObj(() => new Map());
   const sync_state = useRefObj(() => {
     return {
@@ -119,7 +125,7 @@ export default function ({ token, setToken, getMenuRef, setListRef }) {
 
   setListRef({
     sync: sync_state.manager.do_sync,
-    setShow: show => { if (ref.current) { ref.current.dataset.show = show; } }
+    setShow: format => show.updateShow(show.value = format),
   });
 
   useEffect(() => {
@@ -322,12 +328,13 @@ export default function ({ token, setToken, getMenuRef, setListRef }) {
   return (
     <>
       <Error />
-      <div ref={ref} className='list'>
+      <div className='list'>
         {
           list.map((id, index) => (
             <Item
               key={id}
               token={token}
+              show={show}
               setItemRef={val => item_map.set(id, val)}
               id={id}
               onUpdate={() => onUpdate(index)}

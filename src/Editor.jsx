@@ -42,7 +42,7 @@ const Content = (() => {
   }
 })();
 
-export default function Editor({ readonly, getContent, setEditorRef, setContent, setFocus, setCanUndo, setCanRedo }) {
+export default function Editor({ readonly, setEditorRef, getContent, setContent, setFocus, setCanUndo, setCanRedo }) {
   let editorState = Content.parse(getContent());
   if (readonly) {
     return (

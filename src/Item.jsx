@@ -21,7 +21,7 @@ import './Item.css';
 
 const val_length_limit = 4096;
 
-export default function ({ token, setItemRef, id, onUpdate, onDelete }) {
+export default function ({ token, show, setItemRef, id, onUpdate, onDelete }) {
   const [getRemote, setRemote] = useLocalRefJson(key_remote(id), { ver: 0, val: "{\"r\":{\"c\":[{\"c\":[],\"i\":0,\"t\":\"p\"}],\"t\":\"r\"}}" });
   const [getLocal, setLocal] = useLocalRefJson(key_local(id), { ref: 0, ver: 0, val: null });
   const [getTemp, setTemp] = useRefGetSet({ ver: 0, val: null });
@@ -78,12 +78,14 @@ export default function ({ token, setItemRef, id, onUpdate, onDelete }) {
 
   function update_frame_state() {
     getFrameRef().setState(current_state());
+    getFrameRef().setShow(getFormat());
   }
 
   useEffect(() => {
     if (getLocal().ver === 0) {
       getEditorRef().focus();
       setLocal({ ref: 0, ver: current_version(), val: getRemote().val });
+      setFormat(show.value);
     }
     update_frame_state();
   });
@@ -96,11 +98,40 @@ export default function ({ token, setItemRef, id, onUpdate, onDelete }) {
     update_frame_state();
   }
 
-  function setContent(val) {
+  function getValue() {
+    return getLocal().val || getRemote().val;
+  }
+
+  function getFormat() {
+    return getValue()[0] === ' ';
+  }
+
+  function getContent() {
+    return getValue()[0] === ' ' ? getValue().substring(1) : getValue();
+  }
+
+  function setValue(val) {
     setLocal({ ref: getLocal().ref, ver: current_version(), val });
     RefreshLocal();
     if (val.length <= val_length_limit) {
       onUpdate();
+    }
+  }
+
+  function setFormat(format) {
+    return setValue(format ? ' ' + getContent() : getContent());
+  }
+
+  function setContent(content) {
+    setValue(getFormat() ? ' ' + content : content);
+  }
+
+  function onFocus(focused) {
+    if (focused) {
+      show.setShow(getFormat());
+      show.updateShow = setFormat;
+    } else {
+      show.updateShow = () => {};
     }
   }
 
@@ -117,7 +148,9 @@ export default function ({ token, setItemRef, id, onUpdate, onDelete }) {
   }
 
   function Revert() {
-    getEditorRef().setContent(getRemote().val);
+    getLocal().val = null;
+    show.setShow(getFormat());
+    getEditorRef().setContent(getContent());
   }
 
   function DeleteOrRestore() {
@@ -236,6 +269,7 @@ export default function ({ token, setItemRef, id, onUpdate, onDelete }) {
 
   return (
     <Frame
+      onFocus={onFocus}
       setFrameRef={setFrameRef}
       getRemote={getRemote}
       getLocal={getLocal}
@@ -251,8 +285,8 @@ export default function ({ token, setItemRef, id, onUpdate, onDelete }) {
       }}
     >
       <Editor
-        getContent={() => getLocal().val || getRemote().val}
         setEditorRef={setEditorRef}
+        getContent={getContent}
         setContent={setContent}
         setFocus={focused => getFrameRef().setFocused(focused)}
         setCanUndo={canUndo => getFrameRef().setCanUndo(canUndo)}
@@ -262,18 +296,24 @@ export default function ({ token, setItemRef, id, onUpdate, onDelete }) {
   )
 }
 
-const Frame = ({ setFrameRef, getRemote, getLocal, children, command }) => {
+const Frame = ({ onFocus, setFrameRef, getRemote, getLocal, children, command }) => {
   const [focused, setFocused] = useState(false);
   const [canUndo, setCanUndo] = useState(false);
   const [canRedo, setCanRedo] = useState(false);
   const [state, setState] = useState('normal');
+  const [show, setShow] = useState(false);
 
   setFrameRef({
     setFocused,
     setCanRedo,
     setCanUndo,
     setState,
+    setShow,
   });
+
+  useEffect(() => {
+    onFocus(focused);
+  }, [focused]);
 
   function current_border_color() {
     switch (state) {
@@ -468,6 +508,7 @@ const Frame = ({ setFrameRef, getRemote, getLocal, children, command }) => {
       className={'item'}
       zIndex='auto'
       style={{ borderColor: current_border_color() }}
+      data-show={show}
       data-ver-local={getLocal().ver}
       data-ver-ref={getLocal().ref}
       data-ver-remote={getRemote().ver}
