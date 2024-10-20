@@ -3,9 +3,16 @@ p {
 }
 
 .hidden {
-  color: transparent;
   caret-color: black;
   border-bottom: 1px solid black;
+}
+
+[data-show="false"] .hidden {
+  color: transparent;
+}
+
+[data-show="true"] .hidden {
+  background-color: yellow;
 }
 
 .hidden:hover {

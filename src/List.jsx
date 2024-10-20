@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import VerticalAlignTopIcon from '@mui/icons-material/VerticalAlignTop';
 import VerticalAlignBottomIcon from '@mui/icons-material/VerticalAlignBottom';
 import AddIcon from '@mui/icons-material/Add';
@@ -26,6 +26,7 @@ const delete_delay_interval = 1 * 60 * 1000;
 const idle_sync_interval = 10 * 60 * 1000;
 
 export default function ({ token, setToken, getMenuRef, setListRef }) {
+  const ref = useRef();
   const [list, setList] = useLocalStateJson('list', []);
   const [getErrorRef, setErrorRef] = useRefGetSet();
   const [getLengthRef, setLengthRef] = useRefGetSet();
@@ -117,7 +118,8 @@ export default function ({ token, setToken, getMenuRef, setListRef }) {
   })();
 
   setListRef({
-    sync: sync_state.manager.do_sync
+    sync: sync_state.manager.do_sync,
+    setShow: show => { if (ref.current) { ref.current.dataset.show = show; } }
   });
 
   useEffect(() => {
@@ -320,7 +322,7 @@ export default function ({ token, setToken, getMenuRef, setListRef }) {
   return (
     <>
       <Error />
-      <div className='list'>
+      <div ref={ref} className='list'>
         {
           list.map((id, index) => (
             <Item

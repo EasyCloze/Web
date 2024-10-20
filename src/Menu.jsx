@@ -33,22 +33,7 @@ export default function ({ token, setToken, setMenuRef, getListRef }) {
   });
 
   useEffect(() => {
-    if (!window.rules) {
-      window.rules = {};
-      for (let i = 0; i < document.styleSheets.length; ++i) {
-        let cssRules = document.styleSheets[i].cssRules;
-        for (let j = 0; j < cssRules.length; ++j) {
-          window.rules[cssRules[j].selectorText] = cssRules[j];
-        }
-      }
-    }
-
-    const style_name = '.hidden';
-    if (!window.rules.hasOwnProperty(style_name)) {
-      throw 'rule name not found';
-    }
-    window.rules[style_name].style.color = show ? 'inherit' : 'transparent';
-    window.rules[style_name].style.backgroundColor = show ? 'yellow' : 'inherit';
+    getListRef().setShow(show);
   }, [show]);
 
   useEffect(() => {
