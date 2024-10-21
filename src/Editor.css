@@ -3,7 +3,6 @@ p {
 }
 
 .hidden {
-  caret-color: black;
   border-bottom: 1px solid black;
 }
 
@@ -11,12 +10,12 @@ p {
   color: transparent;
 }
 
-[data-show="true"] .hidden {
-  background-color: yellow;
+[data-show="false"] .hidden:hover {
+  color: inherit;
 }
 
-.hidden:hover {
-  color: inherit;
+[data-show="true"] .hidden {
+  background-color: yellow;
 }
 
 .hidden[data-mark="true"][data-new="true"] {
@@ -97,7 +96,7 @@ p {
 }
 
 @media print {
-  .mark {
-    outline: none;
+  .hidden[data-mark="true"] {
+    outline: none !important;
   }
 }
