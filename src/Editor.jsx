@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { $getSelection, $selectAll, $isRangeSelection, $createRangeSelection, $setSelection, TextNode, createCommand, COMMAND_PRIORITY_LOW, UNDO_COMMAND, REDO_COMMAND, CAN_UNDO_COMMAND, CAN_REDO_COMMAND, PASTE_COMMAND } from 'lexical';
+import { $getSelection, $selectAll, $isRangeSelection, $createRangeSelection, $setSelection, $createTabNode, TextNode, createCommand, COMMAND_PRIORITY_LOW, UNDO_COMMAND, REDO_COMMAND, CAN_UNDO_COMMAND, CAN_REDO_COMMAND, PASTE_COMMAND } from 'lexical';
 import { objectKlassEquals } from '@lexical/utils';
 import { $generateNodesFromSerializedNodes } from '@lexical/clipboard';
 import { LexicalComposer } from '@lexical/react/LexicalComposer';
