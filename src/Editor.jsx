@@ -407,6 +407,8 @@ const Toolbar = ({ setToolbarRef }) => {
             </>
           ) : state.single ? (
             <>
+              <Button onClick={command('show_all')} ><Text id='item.editor.show.button' /></Button>
+              <Placeholder width='2px' />
               {
                 !state.mark ? (
                   <Button onClick={command('mark_all')} ><Text id='item.editor.mark.button' /></Button>
@@ -414,16 +416,14 @@ const Toolbar = ({ setToolbarRef }) => {
                   <Button onClick={command('unmark_all')} ><Text id='item.editor.unmark.button' /></Button>
                 )
               }
-              <Placeholder width='2px' />
-              <Button onClick={command('show_all')} ><Text id='item.editor.show.button' /></Button>
             </>
           ) : (
             <>
+              <Button onClick={command('show_all')} ><Text id='item.editor.show.button' /></Button>
+              <Placeholder width='2px' />
               <Button onClick={command('mark_all')} ><Text id='item.editor.mark.button' /></Button>
               <Placeholder width='2px' />
               <Button onClick={command('unmark_all')} ><Text id='item.editor.unmark.button' /></Button>
-              <Placeholder width='2px' />
-              <Button onClick={command('show_all')} ><Text id='item.editor.show.button' /></Button>
             </>
           )
         }
