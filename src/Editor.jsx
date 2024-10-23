@@ -377,7 +377,7 @@ const Toolbar = ({ setToolbarRef }) => {
     const body_rect = document.body.getBoundingClientRect();
     const parent_rect = ref.current.offsetParent.getBoundingClientRect();
     if (editor.mouse) {
-      ref.current.style.left = Math.max(0, Math.min(editor.mouse.x + 20 - body_rect.left, body_rect.width - rect.width)) - (parent_rect.left - body_rect.left) + 'px';
+      ref.current.style.left = Math.max(0, Math.min(editor.mouse.x - 10 - body_rect.left, body_rect.width - rect.width)) - (parent_rect.left - body_rect.left) + 'px';
       ref.current.style.top = Math.max(0, Math.min(editor.mouse.y + 20 - body_rect.top, body_rect.height - rect.height)) - (parent_rect.top - body_rect.top) + 'px';
     } else {
       ref.current.style.left = '10px';
@@ -407,6 +407,8 @@ const Toolbar = ({ setToolbarRef }) => {
             </>
           ) : state.single ? (
             <>
+              <Button onClick={command('show_all')} ><Text id='item.editor.show.button' /></Button>
+              <Placeholder width='2px' />
               {
                 !state.mark ? (
                   <Button onClick={command('mark_all')} ><Text id='item.editor.mark.button' /></Button>
@@ -414,16 +416,14 @@ const Toolbar = ({ setToolbarRef }) => {
                   <Button onClick={command('unmark_all')} ><Text id='item.editor.unmark.button' /></Button>
                 )
               }
-              <Placeholder width='2px' />
-              <Button onClick={command('show_all')} ><Text id='item.editor.show.button' /></Button>
             </>
           ) : (
             <>
+              <Button onClick={command('show_all')} ><Text id='item.editor.show.button' /></Button>
+              <Placeholder width='2px' />
               <Button onClick={command('mark_all')} ><Text id='item.editor.mark.button' /></Button>
               <Placeholder width='2px' />
               <Button onClick={command('unmark_all')} ><Text id='item.editor.unmark.button' /></Button>
-              <Placeholder width='2px' />
-              <Button onClick={command('show_all')} ><Text id='item.editor.show.button' /></Button>
             </>
           )
         }
