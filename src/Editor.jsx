@@ -165,9 +165,9 @@ const State = ({ setEditorRef, setFocus, setCanUndo, setCanRedo }) => {
     root.onblur = () => { setToolbarState({ show: false }); setFocus(false); }
     root.onkeydown = event => {
       if (event.ctrlKey) {
-        switch (event.key) {
-          case 'z': undo(); break;
-          case 'y': redo(); break;
+        switch (event.code) {
+          case 'KeyZ': undo(); break;
+          case 'KeyY': redo(); break;
           default: return;
         }
         event.preventDefault();
@@ -379,7 +379,7 @@ const Toolbar = ({ setToolbarRef }) => {
     if (editor.mouse) {
       ref.current.style.left = Math.max(0, Math.min(editor.mouse.x - 10 - body_rect.left, body_rect.width - rect.width)) - (parent_rect.left - body_rect.left) + 'px';
       ref.current.style.top = Math.max(0, Math.min(editor.mouse.y + 20 - body_rect.top, body_rect.height - rect.height)) - (parent_rect.top - body_rect.top) + 'px';
-    } else {
+    } else { 
       ref.current.style.left = '10px';
       ref.current.style.top = parent_rect.height - 7 + 'px';
     }
