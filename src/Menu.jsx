@@ -89,7 +89,7 @@ export default function ({ token, setToken, setMenuRef, getListRef }) {
                     <Placeholder width='5px' />
                     {
                       syncing ?
-                        <CircularProgress size='20px' /> :
+                        <CircularProgress size='20px' style={{ padding: '10px' }} /> :
                         <IconButton
                           icon={<SyncIcon />}
                           title={
