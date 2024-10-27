@@ -18,6 +18,7 @@
   "dialog.setting.welcome.text": "Hello! ",
   "dialog.username.text": "username",
   "item.action.create.button": "create new item",
+  "item.action.edit.button": "edit",
   "item.action.keep_local.button": "keep local",
   "item.action.keep_remote.button": "keep remote",
   "item.action.restore.button": "restore",

@@ -18,6 +18,7 @@
   "dialog.setting.welcome.text": "こんにちは！",
   "dialog.username.text": "ユーザー名",
   "item.action.create.button": "新しいアイテムを作成",
+  "item.action.edit.button": "編集",
   "item.action.keep_local.button": "ローカルを保持",
   "item.action.keep_remote.button": "リモートを保持",
   "item.action.restore.button": "復元",

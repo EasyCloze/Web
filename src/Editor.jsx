@@ -54,7 +54,7 @@ export default function Editor({ readonly, setEditorRef, getContent, setContent,
   } else {
     return (
       <LexicalComposer initialConfig={{ namespace: 'EasyCloze', editable: !readonly, editorState, theme: {}, nodes: [HiddenNode], onError(error) { throw error } }} >
-        <RichTextPlugin contentEditable={<ContentEditable style={{ outline: 'none' }} />} />
+        <RichTextPlugin contentEditable={<ContentEditable style={{ outline: 'none' }} inputMode='none' />} />
         <State setEditorRef={setEditorRef} setFocus={setFocus} setCanUndo={setCanUndo} setCanRedo={setCanRedo} />
         <OnChangePlugin ignoreSelectionChange ignoreHistoryMergeTagChange onChange={editorState => setContent(Content.stringify(editorState.toJSON()))} />
         <TabIndentationPlugin />
@@ -135,6 +135,7 @@ const State = ({ setEditorRef, setFocus, setCanUndo, setCanRedo }) => {
 
   setEditorRef({
     focus: () => {
+      editor.getRootElement().inputMode = 'text';
       editor.focus();
     },
     setContent: content => {
@@ -162,7 +163,7 @@ const State = ({ setEditorRef, setFocus, setCanUndo, setCanRedo }) => {
     root.onmousedown =
       root.onmousemove = event => { editor.mouse = { x: event.clientX, y: event.clientY }; }
     root.onfocus = () => { setFocus(true); }
-    root.onblur = () => { setToolbarState({ show: false }); setFocus(false); }
+    root.onblur = () => { setToolbarState({ show: false }); setFocus(false); editor.getRootElement().inputMode = 'none'; }
     root.onkeydown = event => {
       if (event.ctrlKey) {
         switch (event.code) {
@@ -379,7 +380,7 @@ const Toolbar = ({ setToolbarRef }) => {
     if (editor.mouse) {
       ref.current.style.left = Math.max(0, Math.min(editor.mouse.x - 10 - body_rect.left, body_rect.width - rect.width)) - (parent_rect.left - body_rect.left) + 'px';
       ref.current.style.top = Math.max(0, Math.min(editor.mouse.y + 20 - body_rect.top, body_rect.height - rect.height)) - (parent_rect.top - body_rect.top) + 'px';
-    } else { 
+    } else {
       ref.current.style.left = '10px';
       ref.current.style.top = parent_rect.height - 7 + 'px';
     }

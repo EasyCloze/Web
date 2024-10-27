@@ -18,6 +18,7 @@
   "dialog.setting.welcome.text": "你好！",
   "dialog.username.text": "用户名",
   "item.action.create.button": "创建为新条目",
+  "item.action.edit.button": "编辑",
   "item.action.keep_local.button": "保留本地",
   "item.action.keep_remote.button": "保留远端",
   "item.action.restore.button": "恢复",

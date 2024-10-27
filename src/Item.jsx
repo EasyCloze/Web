@@ -139,6 +139,10 @@ export default function ({ token, show, setItemRef, id, onUpdate, onDelete }) {
     getEditorRef().selectAll();
   }
 
+  function Edit() {
+    getEditorRef().focus();
+  }
+
   function Undo() {
     getEditorRef().undo();
   }
@@ -275,6 +279,7 @@ export default function ({ token, show, setItemRef, id, onUpdate, onDelete }) {
       getLocal={getLocal}
       command={{
         SelectAll,
+        Edit,
         Undo,
         Redo,
         Revert,
@@ -445,6 +450,8 @@ const Frame = ({ onFocus, setFrameRef, getRemote, getLocal, children, command })
     return (
       <PositionAbsolute className='item-toolbar' style={{ right: '5px', top: 'calc(100% - 5px)' }}>
         <Button className='button' onMouseDown={event => { command.SelectAll(); event.preventDefault(); }} ><Text id='item.action.select.button' /></Button>
+        <Placeholder width='2px' />
+        <Button className='button' onMouseDown={event => { command.Edit(); event.preventDefault(); }} ><Text id='item.action.edit.button' /></Button>
       </PositionAbsolute>
     );
   }

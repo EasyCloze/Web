@@ -18,6 +18,7 @@
   "dialog.setting.welcome.text": "Guten Tag! ",
   "dialog.username.text": "Benutzername",
   "item.action.create.button": "neues Element erstellen",
+  "item.action.edit.button": "bearbeiten",
   "item.action.keep_local.button": "lokal behalten",
   "item.action.keep_remote.button": "remote behalten",
   "item.action.restore.button": "wiederherstellen",
