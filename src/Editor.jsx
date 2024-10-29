@@ -291,12 +291,13 @@ const State = ({ setEditorRef, setFocus, setCanUndo, setCanRedo }) => {
         const selection = $getSelection();
         const nodes = selection.getNodes();
 
-        const hide = () => {
-          selection.insertNodes([new HiddenNode(selection.getTextContent(), undefined, false)]);
-        }
-
-        const mark = () => {
-          selection.insertNodes([new HiddenNode(selection.getTextContent(), undefined, true)]);
+        const hide = (mark) => {
+          let content = selection.getTextContent();
+          let node = new HiddenNode(content, undefined, mark);
+          selection.insertNodes([node]);
+          let new_selection = $createRangeSelection();
+          new_selection.setTextNodeRange(node, 0, node, content.length);
+          $setSelection(new_selection);
         }
 
         const mark_all = () => {
@@ -319,12 +320,12 @@ const State = ({ setEditorRef, setFocus, setCanUndo, setCanRedo }) => {
           if (selection.isCollapsed()) {
             let node = nodes[0];
             let content = node.getTextContent();
-            let offset = selection.getStartEndPoints()[0].offset;
             let prev = node.getPreviousSibling();
             let next = node.getNextSibling();
+            let begin = 0, end = content.length;
             if (prev instanceof TextNode && !(prev instanceof HiddenNode)) {
               content = prev.getTextContent() + content;
-              offset = prev.getTextContent().length + offset;
+              begin = prev.getTextContent().length, end += begin;
               prev.remove();
             }
             if (next instanceof TextNode && !(next instanceof HiddenNode)) {
@@ -333,7 +334,7 @@ const State = ({ setEditorRef, setFocus, setCanUndo, setCanRedo }) => {
             }
             node = node.replace(new TextNode(content));
             let new_selection = $createRangeSelection();
-            new_selection.setTextNodeRange(node, offset, node, offset);
+            new_selection.setTextNodeRange(node, begin, node, end);
             $setSelection(new_selection);
           } else {
             nodes.forEach(node => {
@@ -345,8 +346,8 @@ const State = ({ setEditorRef, setFocus, setCanUndo, setCanRedo }) => {
         }
 
         ({
-          hide,
-          mark,
+          hide: () => hide(false),
+          mark: () => hide(true),
           mark_all,
           unmark_all,
           show_all
