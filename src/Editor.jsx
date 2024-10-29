@@ -361,12 +361,11 @@ const State = ({ setEditorRef, setFocus, setCanUndo, setCanRedo }) => {
   }, []);
 
   return (
-    <Toolbar setToolbarRef={setToolbarRef} />
+    <Toolbar setToolbarRef={setToolbarRef} getToolbarPos={getToolbarPos} command={name => () => editor.dispatchCommand(TOOLBAR_COMMAND, name)} />
   )
 }
 
-const Toolbar = ({ setToolbarRef }) => {
-  const [editor] = useLexicalComposerContext();
+const Toolbar = ({ setToolbarRef, getToolbarPos, command }) => {
   const ref = useRef();
   const [state, setState] = useState({ show: false });
 
@@ -381,19 +380,16 @@ const Toolbar = ({ setToolbarRef }) => {
     const rect = ref.current.getBoundingClientRect();
     const body_rect = document.body.getBoundingClientRect();
     const parent_rect = ref.current.offsetParent.getBoundingClientRect();
-    if (editor.mouse) {
-      ref.current.style.left = Math.max(0, Math.min(editor.mouse.x - 10 - body_rect.left, body_rect.width - rect.width)) - (parent_rect.left - body_rect.left) + 'px';
-      ref.current.style.top = Math.max(0, Math.min(editor.mouse.y + 20 - body_rect.top, body_rect.height - rect.height)) - (parent_rect.top - body_rect.top) + 'px';
+    const pos = getToolbarPos();
+    if (pos) {
+      ref.current.style.left = Math.max(0, Math.min(pos.x - 10 - body_rect.left, body_rect.width - rect.width)) - (parent_rect.left - body_rect.left) + 'px';
+      ref.current.style.top = Math.max(0, Math.min(pos.y + 20 - body_rect.top, body_rect.height - rect.height)) - (parent_rect.top - body_rect.top) + 'px';
     } else {
       ref.current.style.left = '10px';
       ref.current.style.top = parent_rect.height - 7 + 'px';
     }
     ref.current.style.visibility = 'visible';
   });
-
-  function command(name) {
-    return () => editor.dispatchCommand(TOOLBAR_COMMAND, name);
-  }
 
   return (
     state.show ? (
