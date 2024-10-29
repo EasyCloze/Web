@@ -125,8 +125,10 @@ const ReadonlyState = ({ editorState }) => {
 const State = ({ setEditorRef, setFocus, setCanUndo, setCanRedo }) => {
   const [editor] = useLexicalComposerContext();
   const [getToolbarRef, setToolbarRef] = useRefGetSet();
+  const [getToolbarPos, setToolbarPos] = useRefGetSet();
 
   function setToolbarState(state) {
+    setToolbarPos(editor.mouse);
     getToolbarRef().setState(state);
   }
 
@@ -284,6 +286,8 @@ const State = ({ setEditorRef, setFocus, setCanUndo, setCanRedo }) => {
     editor.registerCommand(
       TOOLBAR_COMMAND,
       (name) => {
+        editor.mouse = getToolbarPos();
+
         const selection = $getSelection();
         const nodes = selection.getNodes();
 
