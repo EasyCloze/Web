@@ -47,7 +47,7 @@ export default function ({ token, setToken, setMenuRef, getListRef }) {
 
   useEffect(() => {
     function handleCtrlS(event) {
-      if (event.ctrlKey && event.key === 's') {
+      if (event.ctrlKey && event.code === 'KeyS') {
         event.preventDefault();
         if (token) {
           getListRef().sync();
