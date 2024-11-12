@@ -78,7 +78,7 @@ export default function ({ token, show, setItemRef, id, onUpdate, onDelete }) {
 
   function update_frame_state() {
     getFrameRef().setState(current_state());
-    getFrameRef().setShow(getFormat());
+    getFrameRef().setFormat(getFormat());
   }
 
   useEffect(() => {
@@ -273,6 +273,8 @@ export default function ({ token, show, setItemRef, id, onUpdate, onDelete }) {
 
   return (
     <Frame
+      initialState={current_state()}
+      initialFormat={getFormat()}
       onFocus={onFocus}
       setFrameRef={setFrameRef}
       getRemote={getRemote}
@@ -301,19 +303,19 @@ export default function ({ token, show, setItemRef, id, onUpdate, onDelete }) {
   )
 }
 
-const Frame = ({ onFocus, setFrameRef, getRemote, getLocal, children, command }) => {
+const Frame = ({ initialState, initialFormat, onFocus, setFrameRef, getRemote, getLocal, children, command }) => {
   const [focused, setFocused] = useState(false);
   const [canUndo, setCanUndo] = useState(false);
   const [canRedo, setCanRedo] = useState(false);
-  const [state, setState] = useState('normal');
-  const [show, setShow] = useState(false);
+  const [state, setState] = useState(initialState);
+  const [format, setFormat] = useState(initialFormat);
 
   setFrameRef({
     setFocused,
     setCanRedo,
     setCanUndo,
     setState,
-    setShow,
+    setFormat,
   });
 
   useEffect(() => {
@@ -515,7 +517,7 @@ const Frame = ({ onFocus, setFrameRef, getRemote, getLocal, children, command })
       className={'item'}
       zIndex='auto'
       style={{ borderColor: current_border_color() }}
-      data-show={show}
+      data-show={format}
       data-ver-local={getLocal().ver}
       data-ver-ref={getLocal().ref}
       data-ver-remote={getRemote().ver}
