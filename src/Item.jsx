@@ -33,10 +33,10 @@ export default function ({ token, show, setItemRef, id, onUpdate, onDelete }) {
     const ver_remote = getRemote().ver, { ref, ver, val } = getLocal();
     if (ref === ver_remote) {
       if (ver_remote === 0) {
-        if (ver > 0) {
+        if (ver >= 0) {
           if (!token) {
             return 'normal';
-          } else if (val.length <= val_length_limit) {
+          } else if (ver === 0 || val.length <= val_length_limit) {
             return 'created';
           } else {
             return 'created invalid';
@@ -87,8 +87,7 @@ export default function ({ token, show, setItemRef, id, onUpdate, onDelete }) {
       setLocal({ ref: 0, ver: current_version(), val: getRemote().val });
       setFormat(show.value);
     }
-    update_frame_state();
-  });
+  }, []);
 
   function RefreshLocal() {
     if (getRemote().ver > 0 && getLocal().ver > 0 && getLocal().val === getRemote().val) {
