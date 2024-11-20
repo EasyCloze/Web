@@ -50,6 +50,7 @@ export default function ({ token, setToken, setMenuRef, getListRef }) {
       if (event.ctrlKey && event.code === 'KeyS') {
         event.preventDefault();
         if (token) {
+          window.scrollTo({ top: 0, behavior: 'instant' });
           getListRef().sync();
         }
       }
