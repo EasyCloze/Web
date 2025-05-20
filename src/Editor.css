@@ -16,7 +16,7 @@ p {
 }
 
 [data-show="true"] .hidden {
-  background-color: yellow;
+  background: linear-gradient(to top, yellow 90%, transparent);
 }
 
 .hidden[data-mark="true"][data-new="true"] {
