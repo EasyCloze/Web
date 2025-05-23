@@ -164,8 +164,8 @@ const State = ({ setEditorRef, setFocus, setCanUndo, setCanRedo }) => {
       root.ontouchmove = event => { const touch = event.targetTouches[0]; editor.mouse = { x: touch.clientX, y: touch.clientY }; }
     root.onmousedown =
       root.onmousemove = event => { editor.mouse = { x: event.clientX, y: event.clientY }; }
-    root.onfocus = () => { setFocus(true); }
-    root.onblur = () => { setToolbarState({ show: false }); setFocus(false); editor.getRootElement().inputMode = 'none'; }
+    root.onfocus = () => { editor.mouse ? setFocus(true) : root.blur(); }
+    root.onblur = () => { setToolbarState({ show: false }); setFocus(false); editor.mouse = undefined; editor.getRootElement().inputMode = 'none'; }
     root.onkeydown = event => {
       if (event.ctrlKey) {
         switch (event.code) {
