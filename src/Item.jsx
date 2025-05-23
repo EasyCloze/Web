@@ -89,6 +89,10 @@ export default function ({ token, show, setItemRef, id, onUpdate, onDelete }) {
     }
   }, []);
 
+  useEffect(() => {
+    update_frame_state();
+  }, [token]);
+
   function RefreshLocal() {
     if (getRemote().ver > 0 && getLocal().ver > 0 && getLocal().val === getRemote().val) {
       const ver_remote = getRemote().ver;
