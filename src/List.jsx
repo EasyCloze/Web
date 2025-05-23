@@ -3,6 +3,7 @@ import VerticalAlignTopIcon from '@mui/icons-material/VerticalAlignTop';
 import VerticalAlignBottomIcon from '@mui/icons-material/VerticalAlignBottom';
 import AddIcon from '@mui/icons-material/Add';
 import Tooltip from '@mui/material/Tooltip';
+import { useScrollTrigger } from '@mui/material';
 import { localJson } from './utility/local';
 import { useLocalStateJson } from './utility/localState';
 import { useRefGetSet } from './utility/refGetSet';
@@ -285,12 +286,21 @@ export default function ({ token, setToken, getMenuRef, setListRef }) {
   const Error = () => {
     const error_display_time = 10 * 1000;
     const [error, setError] = useState(null);
+    const scrollTrigger = useScrollTrigger({ threshold: 30 });
 
     useEffect(() => {
-      setTimeout(() => {
+      if (error) {
+        setTimeout(() => {
+          setError(null);
+        }, error_display_time);
+      }
+    }, [error]);
+
+    useEffect(() => {
+      if (error && scrollTrigger) {
         setError(null);
-      }, error_display_time);
-    });
+      }
+    }, [scrollTrigger]);
 
     setErrorRef({
       setError
