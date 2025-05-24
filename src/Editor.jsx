@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { $getSelection, $selectAll, $isRangeSelection, $createRangeSelection, $setSelection, $createTabNode, TextNode, createCommand, COMMAND_PRIORITY_LOW, SELECTION_CHANGE_COMMAND, UNDO_COMMAND, REDO_COMMAND, CAN_UNDO_COMMAND, CAN_REDO_COMMAND, PASTE_COMMAND } from 'lexical';
+import { $getSelection, $selectAll, $isRangeSelection, $createRangeSelection, $setSelection, $getRoot, $createParagraphNode, $isParagraphNode, $createTabNode, TextNode, createCommand, COMMAND_PRIORITY_LOW, SELECTION_CHANGE_COMMAND, UNDO_COMMAND, REDO_COMMAND, CAN_UNDO_COMMAND, CAN_REDO_COMMAND, PASTE_COMMAND } from 'lexical';
 import { objectKlassEquals } from '@lexical/utils';
 import { $generateNodesFromSerializedNodes } from '@lexical/clipboard';
 import { LexicalComposer } from '@lexical/react/LexicalComposer';
@@ -182,7 +182,42 @@ const State = ({ setEditorRef, setFocus, setCanUndo, setCanRedo }) => {
         $setSelection(null);
       });
       editor.dispatchCommand(SELECTION_CHANGE_COMMAND, null);
+
+      editor.update(() => {
+        const root = $getRoot();
+        let children = root.getChildren();
+        while (children.length > 0 && $isParagraphNode(children.at(0)) && children.at(0).getTextContent().trim() === '') {
+          children.at(0).remove();
+          children = root.getChildren();
+        }
+        while (children.length > 0 && $isParagraphNode(children.at(-1)) && children.at(-1).getTextContent().trim() === '') {
+          children.at(-1).remove();
+          children = root.getChildren();
+        }
+      });
     }
+
+    editor.registerCommand(
+      SELECTION_CHANGE_COMMAND,
+      () => {
+        editor.update(() => {
+          const selection = $getSelection();
+          if (!$isRangeSelection(selection) || !selection.isCollapsed()) {
+            return;
+          }
+          const root = $getRoot();
+          const last = root.getChildren().at(-1);
+          if (last && !last.isParentOf(selection.anchor.getNode())) {
+            return;
+          }
+          if (!last || last.getTextContent().trim() !== '') {
+            root.append($createParagraphNode());
+          }
+        });
+        return false;
+      },
+      COMMAND_PRIORITY_LOW,
+    );
 
     editor.registerCommand(
       SELECTION_CHANGE_COMMAND,
