@@ -32,7 +32,7 @@ const Content = (() => {
     return str.replace(new RegExp(Object.keys(map).join('|'), 'g'), matched => map[matched]);
   }
 
-  const removeKeys = ['detail', 'format', 'mode', 'style', 'direction', 'version', 'textFormat'];
+  const removeKeys = ['detail', 'format', 'mode', 'style', 'direction', 'version', 'textFormat', 'textStyle'];
   const replacementMap = { '\"root\"\:': '\"r\"\:', '\"children\"\:': '\"c\"\:', '\"text\"\:': '\"x\"\:', '\"indent\"\:': '\"i\"\:', '\"type\"\:\"root\"': '\"t\"\:\"r\"', '\"type\"\:\"paragraph\"': '\"t\"\:\"p\"', '\"type\"\:\"text\"': '\"t\"\:\"x\"', '\"type\"\:\"hidden\"': '\"t\"\:\"h\"' };
   const inverseReplacementMap = inverseObjectMap(replacementMap);
 
