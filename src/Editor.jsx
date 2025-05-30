@@ -181,7 +181,6 @@ const State = ({ setEditorRef, setFocus, setCanUndo, setCanRedo }) => {
       editor.update(() => {
         $setSelection(null);
       });
-      editor.dispatchCommand(SELECTION_CHANGE_COMMAND, null);
 
       editor.update(() => {
         const root = $getRoot();
@@ -219,9 +218,8 @@ const State = ({ setEditorRef, setFocus, setCanUndo, setCanRedo }) => {
       COMMAND_PRIORITY_LOW,
     );
 
-    editor.registerCommand(
-      SELECTION_CHANGE_COMMAND,
-      () => {
+    editor.registerUpdateListener(({ editorState }) => {
+      editorState.read(() => {
         const selection = $getSelection();
         if ($isRangeSelection(selection)) {
           const nodes = selection.getNodes();
@@ -254,10 +252,8 @@ const State = ({ setEditorRef, setFocus, setCanUndo, setCanRedo }) => {
         } else {
           setToolbarState({ show: false });
         }
-        return false;
-      },
-      COMMAND_PRIORITY_LOW,
-    );
+      });
+    });
 
     editor.registerCommand(
       PASTE_COMMAND,
