@@ -204,17 +204,19 @@ const State = ({ setEditorRef, setFocus, setCanUndo, setCanRedo }) => {
           if (!$isRangeSelection(selection) || !selection.isCollapsed()) {
             return;
           }
-          if (selection.anchor.offset != selection.anchor.getNode().getTextContent().length) {
-            return;
-          }
           const root = $getRoot();
-          const last = root.getChildren().at(-1);
-          if (last && !last.isParentOf(selection.anchor.getNode())) {
+          let last = root.getChildren().at(-1);
+          if (!last || !last.isParentOf(selection.anchor.getNode())) {
             return;
           }
-          if (!last || last.getTextContent().trim() !== '') {
-            root.append($createParagraphNode());
+          while (last.getChildren && last.getChildren().length > 0) {
+            last = last.getChildren().at(-1);
           }
+          if (selection.anchor.key !== last.__key || selection.anchor.offset !== last.getTextContentSize()) {
+            return;
+          }
+          root.append($createParagraphNode());
+          root.append($createParagraphNode());
         });
         return false;
       },
