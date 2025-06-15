@@ -185,11 +185,11 @@ const State = ({ setEditorRef, setFocus, setCanUndo, setCanRedo }) => {
       editor.update(() => {
         const root = $getRoot();
         let children = root.getChildren();
-        while (children.length > 0 && $isParagraphNode(children.at(0)) && children.at(0).getTextContent().trim() === '') {
+        while (children.length > 1 && $isParagraphNode(children.at(0)) && children.at(0).getTextContent().trim() === '') {
           children.at(0).remove();
           children = root.getChildren();
         }
-        while (children.length > 0 && $isParagraphNode(children.at(-1)) && children.at(-1).getTextContent().trim() === '') {
+        while (children.length > 1 && $isParagraphNode(children.at(-1)) && children.at(-1).getTextContent().trim() === '') {
           children.at(-1).remove();
           children = root.getChildren();
         }
