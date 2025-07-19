@@ -453,7 +453,8 @@ const Frame = ({ initialState, initialFormat, onFocus, setFrameRef, getRemote, g
     }
 
     return (
-      <PositionSticky className='item-toolbar' bottom={'60px'} style={{ width: 'max-content', marginLeft: 'auto', marginTop: '-32px' }}>
+      <PositionSticky className='item-toolbar' bottom={'100px'} style={{ marginLeft: 'auto', width: 'max-content', height: 0 }}>
+        <Placeholder height='5px' />
         <Button className='button' onMouseDown={event => { command.SelectAll(); event.preventDefault(); }} ><Text id='item.action.select.button' /></Button>
         <Placeholder width='2px' />
         <Button className='button' onMouseDown={event => { command.Edit(); event.preventDefault(); }} ><Text id='item.action.edit.button' /></Button>
