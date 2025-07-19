@@ -14,7 +14,7 @@ import Message from './widget/Message';
 import Label from './widget/Label';
 import Placeholder from './widget/Placeholder';
 import PositionRelative from './widget/PositionRelative';
-import PositionAbsolute from './widget/PositionAbsolute';
+import PositionSticky from './widget/PositionSticky';
 import PositionFixed from './widget/PositionFixed';
 import Editor from './Editor';
 import './Item.css';
@@ -453,11 +453,11 @@ const Frame = ({ initialState, initialFormat, onFocus, setFrameRef, getRemote, g
     }
 
     return (
-      <PositionAbsolute className='item-toolbar' style={{ right: '5px', top: 'calc(100% - 5px)' }}>
+      <PositionSticky className='item-toolbar' bottom={'60px'} style={{ width: 'max-content', marginLeft: 'auto', marginTop: '-32px' }}>
         <Button className='button' onMouseDown={event => { command.SelectAll(); event.preventDefault(); }} ><Text id='item.action.select.button' /></Button>
         <Placeholder width='2px' />
         <Button className='button' onMouseDown={event => { command.Edit(); event.preventDefault(); }} ><Text id='item.action.edit.button' /></Button>
-      </PositionAbsolute>
+      </PositionSticky >
     );
   }
 
