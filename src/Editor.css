@@ -7,29 +7,29 @@ p {
   border-bottom: 1px solid black;
 }
 
-[data-show="false"] .hidden {
-  color: transparent;
-}
-
-[data-show="false"] .hidden:hover {
-  color: inherit;
-}
-
-[data-show="true"] .hidden {
+[data-highlight="true"] .hidden {
   background: linear-gradient(to top, yellow 90%, transparent);
 }
 
-.hidden[data-mark="true"][data-new="true"] {
+[data-highlight="false"] .hidden {
+  color: transparent;
+}
+
+[data-highlight="false"] .hidden:hover {
+  color: inherit;
+}
+
+[data-highlight="false"] .hidden[data-mark="true"][data-new="true"] {
   outline: 2px solid orange;
   animation: blink-slow 2.5s infinite;
 }
 
-.hidden[data-mark="true"][data-new="false"] {
+[data-highlight="false"] .hidden[data-mark="true"][data-new="false"] {
   outline: 2px solid orange;
   animation: blink 1s steps(2, end) 60s 60, blink-slow 2.5s 120s infinite;
 }
 
-.hidden[data-mark="true"]:hover {
+[data-highlight="false"] .hidden[data-mark="true"]:hover {
   animation: none;
 }
 

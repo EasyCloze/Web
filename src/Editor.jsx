@@ -136,6 +136,7 @@ const State = ({ setEditorRef, setFocus, setCanUndo, setCanRedo }) => {
   function redo() { editor.dispatchCommand(REDO_COMMAND); }
 
   setEditorRef({
+    setHighlight: highlight => getToolbarRef().setHighlight(highlight),
     focus: () => {
       editor.getRootElement().inputMode = 'text';
       editor.focus();
@@ -417,9 +418,11 @@ const State = ({ setEditorRef, setFocus, setCanUndo, setCanRedo }) => {
 const Toolbar = ({ setToolbarRef, getToolbarPos, command }) => {
   const ref = useRef();
   const [state, setState] = useState({ show: false });
+  const [highlight, setHighlight] = useState(false);
 
   setToolbarRef({
-    setState
+    setState,
+    setHighlight
   });
 
   useEffect(() => {
@@ -449,32 +452,40 @@ const Toolbar = ({ setToolbarRef, getToolbarPos, command }) => {
         onMouseDown={event => event.preventDefault()}
       >
         {
-          state.plain ? (
-            <>
-              <Button onClick={command('hide')} ><Text id='item.editor.hide.button' /></Button>
-              <Placeholder width='2px' />
-              <Button onClick={command('mark')} ><Text id='item.editor.mark.button' /></Button>
-            </>
-          ) : state.single ? (
-            <>
-              <Button onClick={command('show_all')} ><Text id='item.editor.show.button' /></Button>
-              <Placeholder width='2px' />
-              {
-                !state.mark ? (
-                  <Button onClick={command('mark_all')} ><Text id='item.editor.mark.button' /></Button>
-                ) : (
-                  <Button onClick={command('unmark_all')} ><Text id='item.editor.unmark.button' /></Button>
-                )
-              }
-            </>
+          highlight ? (
+            state.plain ? (
+              <Button onClick={command('hide')} ><Text id='item.editor.highlight.button' /></Button>
+            ) : (
+              <Button onClick={command('show_all')} ><Text id='item.editor.unhighlight.button' /></Button>
+            )
           ) : (
-            <>
-              <Button onClick={command('show_all')} ><Text id='item.editor.show.button' /></Button>
-              <Placeholder width='2px' />
-              <Button onClick={command('mark_all')} ><Text id='item.editor.mark.button' /></Button>
-              <Placeholder width='2px' />
-              <Button onClick={command('unmark_all')} ><Text id='item.editor.unmark.button' /></Button>
-            </>
+            state.plain ? (
+              <>
+                <Button onClick={command('hide')} ><Text id='item.editor.hide.button' /></Button>
+                <Placeholder width='2px' />
+                <Button onClick={command('mark')} ><Text id='item.editor.mark.button' /></Button>
+              </>
+            ) : state.single ? (
+              <>
+                <Button onClick={command('show_all')} ><Text id='item.editor.show.button' /></Button>
+                <Placeholder width='2px' />
+                {
+                  !state.mark ? (
+                    <Button onClick={command('mark_all')} ><Text id='item.editor.mark.button' /></Button>
+                  ) : (
+                    <Button onClick={command('unmark_all')} ><Text id='item.editor.unmark.button' /></Button>
+                  )
+                }
+              </>
+            ) : (
+              <>
+                <Button onClick={command('show_all')} ><Text id='item.editor.show.button' /></Button>
+                <Placeholder width='2px' />
+                <Button onClick={command('mark_all')} ><Text id='item.editor.mark.button' /></Button>
+                <Placeholder width='2px' />
+                <Button onClick={command('unmark_all')} ><Text id='item.editor.unmark.button' /></Button>
+              </>
+            )
           )
         }
       </PositionAbsolute>

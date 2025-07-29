@@ -30,11 +30,11 @@ export default function ({ token, setToken, getMenuRef, setListRef }) {
   const [list, setList] = useLocalStateJson('list', []);
   const [getErrorRef, setErrorRef] = useRefGetSet();
   const [getLengthRef, setLengthRef] = useRefGetSet();
-  const show = useRefObj(() => {
+  const highlight = useRefObj(() => {
     return {
       value: false,
-      setShow: value => getMenuRef().setShow(show.value = value),
-      updateShow: () => {},
+      setHighlight: value => getMenuRef().setHighlight(highlight.value = value),
+      updateHighlight: () => {},
     }
   });
   const item_map = useRefObj(() => new Map());
@@ -126,7 +126,7 @@ export default function ({ token, setToken, getMenuRef, setListRef }) {
 
   setListRef({
     sync: sync_state.manager.do_sync,
-    setShow: format => show.updateShow(show.value = format),
+    setHighlight: format => highlight.updateHighlight(highlight.value = format),
   });
 
   useEffect(() => {
@@ -344,7 +344,7 @@ export default function ({ token, setToken, getMenuRef, setListRef }) {
             <Item
               key={id}
               token={token}
-              show={show}
+              highlight={highlight}
               setItemRef={val => item_map.set(id, val)}
               id={id}
               onUpdate={() => onUpdate(index)}

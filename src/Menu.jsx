@@ -18,7 +18,7 @@ import './Menu.css';
 
 export default function ({ token, setToken, setMenuRef, getListRef }) {
   const scrollTrigger = useScrollTrigger({ threshold: 30 });
-  const [show, setShow] = useLocalStateJson('show', false);
+  const [highlight, setHighlight] = useLocalStateJson('highlight', false);
   const [time, setTime] = useLocalStateJson('lastSyncTime');
   const [next, setNext] = useState(0);
   const [online, setOnline] = useLocalStateJson('online');
@@ -27,15 +27,15 @@ export default function ({ token, setToken, setMenuRef, getListRef }) {
 
   setMenuRef({
     time,
-    setShow,
+    setHighlight,
     setSyncing,
     setNext,
     onSync: time => { time ? (setTime(time), setOnline(true)) : setOnline(null) },
   });
 
   useEffect(() => {
-    getListRef().setShow(show);
-  }, [show]);
+    getListRef().setHighlight(highlight);
+  }, [highlight]);
 
   useEffect(() => {
     if (!token) {
@@ -66,8 +66,8 @@ export default function ({ token, setToken, setMenuRef, getListRef }) {
           <Toolbar variant='dense' className='menu'>
             <div>
               <IconButton icon={<SettingsIcon />} title={<Text id='menu.setting.tooltip' />} onClick={() => getDialogRef().setDialog('setting')} />
-              <Tooltip title={<Text id='menu.show.tooltip' />}>
-                <Switch checked={show} onMouseDown={event => event.preventDefault()} onClick={() => setShow(!show)}></Switch>
+              <Tooltip title={<Text id={highlight ? 'menu.highlight_mode.tooltip' : 'menu.hide_mode.tooltip'} />}>
+                <Switch checked={highlight} onMouseDown={event => event.preventDefault()} onClick={() => setHighlight(!highlight)}></Switch>
               </Tooltip>
             </div>
             <div style={{ display: 'flex', flexDirection: 'row', alignItems: 'center' }}>

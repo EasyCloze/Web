@@ -21,7 +21,7 @@ import './Item.css';
 
 const val_length_limit = 4096;
 
-export default function ({ token, show, setItemRef, id, onUpdate, onDelete }) {
+export default function ({ token, highlight, setItemRef, id, onUpdate, onDelete }) {
   const [getRemote, setRemote] = useLocalRefJson(key_remote(id), { ver: 0, val: "{\"r\":{\"c\":[{\"c\":[],\"i\":0,\"t\":\"p\"}],\"t\":\"r\"}}" });
   const [getLocal, setLocal] = useLocalRefJson(key_local(id), { ref: 0, ver: 0, val: null });
   const [getTemp, setTemp] = useRefGetSet({ ver: 0, val: null });
@@ -85,8 +85,9 @@ export default function ({ token, show, setItemRef, id, onUpdate, onDelete }) {
     if (getLocal().ver === 0) {
       getEditorRef().focus();
       setLocal({ ref: 0, ver: current_version(), val: getRemote().val });
-      setFormat(show.value);
+      setFormat(highlight.value);
     }
+    getEditorRef().setHighlight(getFormat());
   }, []);
 
   useEffect(() => {
@@ -131,10 +132,13 @@ export default function ({ token, show, setItemRef, id, onUpdate, onDelete }) {
 
   function onFocus(focused) {
     if (focused) {
-      show.setShow(getFormat());
-      show.updateShow = setFormat;
+      highlight.setHighlight(getFormat());
+      highlight.updateHighlight = highlight => {
+        setFormat(highlight);
+        getEditorRef().setHighlight(highlight);
+      }
     } else {
-      show.updateShow = () => {};
+      highlight.updateHighlight = () => {};
     }
   }
 
@@ -156,7 +160,7 @@ export default function ({ token, show, setItemRef, id, onUpdate, onDelete }) {
 
   function Revert() {
     getLocal().val = null;
-    show.setShow(getFormat());
+    highlight.setHighlight(getFormat());
     getEditorRef().setContent(getContent());
   }
 
@@ -295,6 +299,7 @@ export default function ({ token, show, setItemRef, id, onUpdate, onDelete }) {
       }}
     >
       <Editor
+        highlight={highlight}
         setEditorRef={setEditorRef}
         getContent={getContent}
         setContent={setContent}
@@ -521,7 +526,7 @@ const Frame = ({ initialState, initialFormat, onFocus, setFrameRef, getRemote, g
       className={'item'}
       zIndex='auto'
       style={{ borderColor: current_border_color() }}
-      data-show={format}
+      data-highlight={format}
       data-ver-local={getLocal().ver}
       data-ver-ref={getLocal().ref}
       data-ver-remote={getRemote().ver}
