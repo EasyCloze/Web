@@ -42,7 +42,7 @@ const Content = (() => {
   }
 })();
 
-export default function Editor({ readonly, setEditorRef, getContent, setContent, setFocus, setCanUndo, setCanRedo }) {
+export default function Editor({ readonly, setEditorRef, getHighlight, getContent, setContent, setFocus, setCanUndo, setCanRedo }) {
   let editorState = Content.parse(getContent());
   if (readonly) {
     return (
@@ -55,7 +55,7 @@ export default function Editor({ readonly, setEditorRef, getContent, setContent,
     return (
       <LexicalComposer initialConfig={{ namespace: 'EasyCloze', editable: !readonly, editorState, theme: {}, nodes: [HiddenNode], onError(error) { throw error } }} >
         <RichTextPlugin contentEditable={<ContentEditable style={{ outline: 'none' }} inputMode='none' />} />
-        <State setEditorRef={setEditorRef} setFocus={setFocus} setCanUndo={setCanUndo} setCanRedo={setCanRedo} />
+        <State setEditorRef={setEditorRef} getHighlight={getHighlight} setFocus={setFocus} setCanUndo={setCanUndo} setCanRedo={setCanRedo} />
         <OnChangePlugin ignoreSelectionChange ignoreHistoryMergeTagChange onChange={editorState => setContent(Content.stringify(editorState.toJSON()))} />
         <TabIndentationPlugin />
       </LexicalComposer>
@@ -122,7 +122,7 @@ const ReadonlyState = ({ editorState }) => {
   }, [editor, editorState]);
 }
 
-const State = ({ setEditorRef, setFocus, setCanUndo, setCanRedo }) => {
+const State = ({ setEditorRef, getHighlight, setFocus, setCanUndo, setCanRedo }) => {
   const [editor] = useLexicalComposerContext();
   const [getToolbarRef, setToolbarRef] = useRefGetSet();
   const [getToolbarPos, setToolbarPos] = useRefGetSet();
@@ -411,14 +411,14 @@ const State = ({ setEditorRef, setFocus, setCanUndo, setCanRedo }) => {
   }, []);
 
   return (
-    <Toolbar setToolbarRef={setToolbarRef} getToolbarPos={getToolbarPos} command={name => () => editor.dispatchCommand(TOOLBAR_COMMAND, name)} />
+    <Toolbar getHighlight={getHighlight} setToolbarRef={setToolbarRef} getToolbarPos={getToolbarPos} command={name => () => editor.dispatchCommand(TOOLBAR_COMMAND, name)} />
   )
 }
 
-const Toolbar = ({ setToolbarRef, getToolbarPos, command }) => {
+const Toolbar = ({ getHighlight, setToolbarRef, getToolbarPos, command }) => {
   const ref = useRef();
   const [state, setState] = useState({ show: false });
-  const [highlight, setHighlight] = useState(false);
+  const [highlight, setHighlight] = useState(getHighlight());
 
   setToolbarRef({
     setState,

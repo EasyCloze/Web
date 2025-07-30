@@ -87,7 +87,6 @@ export default function ({ token, highlight, setItemRef, id, onUpdate, onDelete 
       setLocal({ ref: 0, ver: current_version(), val: getRemote().val });
       setFormat(highlight.value);
     }
-    getEditorRef().setHighlight(getFormat());
   }, []);
 
   useEffect(() => {
@@ -299,8 +298,8 @@ export default function ({ token, highlight, setItemRef, id, onUpdate, onDelete 
       }}
     >
       <Editor
-        highlight={highlight}
         setEditorRef={setEditorRef}
+        getHighlight={getFormat}
         getContent={getContent}
         setContent={setContent}
         setFocus={focused => getFrameRef().setFocused(focused)}
