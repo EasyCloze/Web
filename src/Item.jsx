@@ -76,6 +76,24 @@ export default function ({ token, highlight, setItemRef, id, onUpdate, onDelete 
     }
   }
 
+  function editor_available() {
+    switch (current_state()) {
+      case 'normal':
+      case 'created':
+      case 'updated':
+      case 'created invalid':
+      case 'updated invalid':
+      case 'conflict missing':
+      case 'conflict deleted':
+      case 'conflict updated':
+        return true;
+      case 'deleted normal':
+      case 'deleted created':
+      case 'deleted updated':
+        return false;
+    }
+  }
+
   function update_frame_state() {
     getFrameRef().setState(current_state());
     getFrameRef().setFormat(getFormat());
@@ -83,9 +101,9 @@ export default function ({ token, highlight, setItemRef, id, onUpdate, onDelete 
 
   useEffect(() => {
     if (getLocal().ver === 0) {
-      getEditorRef().focus();
       setLocal({ ref: 0, ver: current_version(), val: getRemote().val });
       setFormat(highlight.value);
+      Edit();
     }
   }, []);
 
@@ -146,7 +164,7 @@ export default function ({ token, highlight, setItemRef, id, onUpdate, onDelete 
   }
 
   function Edit() {
-    getEditorRef().focus();
+    getEditorRef().edit();
   }
 
   function Undo() {
@@ -197,6 +215,7 @@ export default function ({ token, highlight, setItemRef, id, onUpdate, onDelete 
   }
 
   setItemRef({
+    edit: () => editor_available() ? (Edit(), true) : false,
     sync: () => {
       const ver_remote = getRemote().ver;
       const { ref, ver, val } = getLocal();

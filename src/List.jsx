@@ -182,6 +182,15 @@ export default function ({ token, setToken, getMenuRef, setListRef }) {
       sync_state.deleting_item_buffer.push(id);
     }
     sync_state.manager.ensure_delete_delay();
+
+    const index = list.indexOf(id);
+    let find_next = true;
+    for (let next = index + 1; find_next && next < list.length; next++) {
+      find_next = !item_map.get(list[next]).edit();
+    }
+    for (let prev = index - 1; find_next && prev >= 0; prev--) {
+      find_next = !item_map.get(list[prev]).edit();
+    }
   }
 
   async function fetch_sync(token, body) {
