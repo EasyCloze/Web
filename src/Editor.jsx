@@ -8,8 +8,8 @@ import { PlainTextPlugin } from '@lexical/react/LexicalPlainTextPlugin';
 import { RichTextPlugin } from '@lexical/react/LexicalRichTextPlugin';
 import { ContentEditable } from '@lexical/react/LexicalContentEditable';
 import { OnChangePlugin } from '@lexical/react/LexicalOnChangePlugin';
+import { HistoryPlugin } from '@lexical/react/LexicalHistoryPlugin';
 import { TabIndentationPlugin } from '@lexical/react/LexicalTabIndentationPlugin';
-import { registerHistory, createEmptyHistoryState } from '@lexical/history';
 import { useRefGetSet } from './utility/refGetSet';
 import Text from './lang/Text';
 import Button from './widget/Button';
@@ -57,6 +57,7 @@ export default function Editor({ readonly, setEditorRef, getHighlight, getConten
         <RichTextPlugin contentEditable={<ContentEditable style={{ outline: 'none' }} inputMode='none' />} />
         <State setEditorRef={setEditorRef} getHighlight={getHighlight} setFocus={setFocus} setCanUndo={setCanUndo} setCanRedo={setCanRedo} />
         <OnChangePlugin ignoreSelectionChange ignoreHistoryMergeTagChange onChange={editorState => setContent(Content.stringify(editorState.toJSON()))} />
+        <HistoryPlugin delay={500} />
         <TabIndentationPlugin />
       </LexicalComposer>
     )
@@ -157,8 +158,6 @@ const State = ({ setEditorRef, getHighlight, setFocus, setCanUndo, setCanRedo })
   useEffect(() => {
     setCanUndo(false);
     setCanRedo(false);
-
-    const unregisterHistory = registerHistory(editor, createEmptyHistoryState(), 500);
 
     const root = editor.getRootElement();
     root.ontouchstart =
@@ -406,8 +405,6 @@ const State = ({ setEditorRef, getHighlight, setFocus, setCanUndo, setCanRedo })
       },
       COMMAND_PRIORITY_LOW,
     );
-
-    return unregisterHistory;
   }, []);
 
   return (
