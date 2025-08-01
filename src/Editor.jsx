@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { $getSelection, $selectAll, $isRangeSelection, $createRangeSelection, $setSelection, $getRoot, $createParagraphNode, $isParagraphNode, $createTabNode, $addUpdateTag, HISTORIC_TAG, TextNode, createCommand, COMMAND_PRIORITY_LOW, SELECTION_CHANGE_COMMAND, UNDO_COMMAND, REDO_COMMAND, CAN_UNDO_COMMAND, CAN_REDO_COMMAND, PASTE_COMMAND } from 'lexical';
-import { objectKlassEquals } from '@lexical/utils';
+import { mergeRegister, objectKlassEquals } from '@lexical/utils';
 import { $generateNodesFromSerializedNodes } from '@lexical/clipboard';
 import { LexicalComposer } from '@lexical/react/LexicalComposer';
 import { useLexicalComposerContext } from '@lexical/react/LexicalComposerContext';
@@ -45,24 +45,20 @@ const Content = (() => {
 
 export default function Editor({ readonly, setEditorRef, getHighlight, getContent, setContent, setFocus, setCanUndo, setCanRedo }) {
   let editorState = Content.parse(getContent());
-  if (readonly) {
-    return (
-      <LexicalComposer initialConfig={{ namespace: 'EasyCloze', editable: !readonly, editorState, theme: {}, nodes: [HiddenNode], onError(error) { throw error } }} >
-        <PlainTextPlugin contentEditable={<ContentEditable style={{ outline: 'none' }} />} />
-        <ReadonlyState editorState={editorState} />
-      </LexicalComposer>
-    )
-  } else {
-    return (
-      <LexicalComposer initialConfig={{ namespace: 'EasyCloze', editable: !readonly, editorState, theme: {}, nodes: [HiddenNode], onError(error) { throw error } }} >
-        <RichTextPlugin contentEditable={<ContentEditable style={{ outline: 'none' }} inputMode='none' />} />
-        <State setEditorRef={setEditorRef} getHighlight={getHighlight} setFocus={setFocus} setCanUndo={setCanUndo} setCanRedo={setCanRedo} />
-        <OnChangePlugin ignoreSelectionChange ignoreHistoryMergeTagChange onChange={(editorState, _, tags) => { if (!tags.has(TAG_NO_HISTORY)) { setContent(Content.stringify(editorState.toJSON())); } }} />
-        <HistoryPlugin delay={500} />
-        <TabIndentationPlugin />
-      </LexicalComposer>
-    )
-  }
+  return readonly ? (
+    <LexicalComposer initialConfig={{ namespace: 'EasyCloze', editable: !readonly, editorState, theme: {}, nodes: [HiddenNode], onError(error) { throw error } }} >
+      <PlainTextPlugin contentEditable={<ContentEditable style={{ outline: 'none' }} />} />
+      <ReadonlyState editorState={editorState} />
+    </LexicalComposer>
+  ) : (
+    <LexicalComposer initialConfig={{ namespace: 'EasyCloze', editable: !readonly, editorState, theme: {}, nodes: [HiddenNode], onError(error) { throw error } }} >
+      <RichTextPlugin contentEditable={<ContentEditable style={{ outline: 'none' }} inputMode='none' />} />
+      <State setEditorRef={setEditorRef} getHighlight={getHighlight} setFocus={setFocus} setCanUndo={setCanUndo} setCanRedo={setCanRedo} />
+      <OnChangePlugin ignoreSelectionChange ignoreHistoryMergeTagChange onChange={(editorState, _, tags) => { if (!tags.has(TAG_NO_HISTORY)) { setContent(Content.stringify(editorState.toJSON())); } }} />
+      <HistoryPlugin delay={500} />
+      <TabIndentationPlugin />
+    </LexicalComposer>
+  )
 }
 
 class HiddenNode extends TextNode {
@@ -204,215 +200,217 @@ const State = ({ setEditorRef, getHighlight, setFocus, setCanUndo, setCanRedo })
 
     editor_trim();
 
-    editor.registerCommand(
-      SELECTION_CHANGE_COMMAND,
-      () => {
-        editor.update(() => {
-          $addUpdateTag(TAG_NO_HISTORY);
-          const selection = $getSelection();
-          if (!$isRangeSelection(selection) || !selection.isCollapsed()) {
-            return;
-          }
-          const root = $getRoot();
-          let last = root.getChildren().at(-1);
-          if (!last || !last.isParentOf(selection.anchor.getNode())) {
-            return;
-          }
-          while (last.getChildren && last.getChildren().length > 0) {
-            last = last.getChildren().at(-1);
-          }
-          if (selection.anchor.key !== last.__key || selection.anchor.offset !== last.getTextContentSize()) {
-            return;
-          }
-          root.append($createParagraphNode());
-          root.append($createParagraphNode());
-        });
-        return false;
-      },
-      COMMAND_PRIORITY_LOW,
-    );
-
-    editor.registerUpdateListener(({ editorState }) => {
-      editorState.read(() => {
-        const selection = $getSelection();
-        if ($isRangeSelection(selection)) {
-          const nodes = selection.getNodes();
-          if (selection.isCollapsed()) {
-            const node = nodes[0];
-            if (node instanceof HiddenNode) {
-              setToolbarState({ show: true, plain: false, single: true, mark: node.mark });
-            } else {
-              setToolbarState({ show: false });
+    return mergeRegister(
+      editor.registerCommand(
+        SELECTION_CHANGE_COMMAND,
+        () => {
+          editor.update(() => {
+            $addUpdateTag(TAG_NO_HISTORY);
+            const selection = $getSelection();
+            if (!$isRangeSelection(selection) || !selection.isCollapsed()) {
+              return;
             }
-          } else {
-            const hiddenNodes = nodes.filter(node => node instanceof HiddenNode);
-            if (hiddenNodes.length === 0) {
-              setToolbarState({ show: true, plain: true });
-            } else {
-              if (hiddenNodes.length === 1) {
-                setToolbarState({ show: true, plain: false, single: true, mark: hiddenNodes[0].mark });
+            const root = $getRoot();
+            let last = root.getChildren().at(-1);
+            if (!last || !last.isParentOf(selection.anchor.getNode())) {
+              return;
+            }
+            while (last.getChildren && last.getChildren().length > 0) {
+              last = last.getChildren().at(-1);
+            }
+            if (selection.anchor.key !== last.__key || selection.anchor.offset !== last.getTextContentSize()) {
+              return;
+            }
+            root.append($createParagraphNode());
+            root.append($createParagraphNode());
+          });
+          return false;
+        },
+        COMMAND_PRIORITY_LOW,
+      ),
+
+      editor.registerUpdateListener(({ editorState }) => {
+        editorState.read(() => {
+          const selection = $getSelection();
+          if ($isRangeSelection(selection)) {
+            const nodes = selection.getNodes();
+            if (selection.isCollapsed()) {
+              const node = nodes[0];
+              if (node instanceof HiddenNode) {
+                setToolbarState({ show: true, plain: false, single: true, mark: node.mark });
               } else {
-                const markCount = hiddenNodes.reduce((count, node) => { return node.mark ? count + 1 : count; }, 0);
-                if (markCount === 0) {
-                  setToolbarState({ show: true, plain: false, single: true, mark: false });
-                } else if (markCount === hiddenNodes.length) {
-                  setToolbarState({ show: true, plain: false, single: true, mark: true });
+                setToolbarState({ show: false });
+              }
+            } else {
+              const hiddenNodes = nodes.filter(node => node instanceof HiddenNode);
+              if (hiddenNodes.length === 0) {
+                setToolbarState({ show: true, plain: true });
+              } else {
+                if (hiddenNodes.length === 1) {
+                  setToolbarState({ show: true, plain: false, single: true, mark: hiddenNodes[0].mark });
                 } else {
-                  setToolbarState({ show: true, plain: false, single: false });
-                }
-              }
-            }
-          }
-        } else {
-          setToolbarState({ show: false });
-        }
-      });
-    });
-
-    editor.registerCommand(
-      PASTE_COMMAND,
-      (event) => {
-        event.preventDefault();
-        editor.update(() => {
-          const selection = $getSelection();
-          const dataTransfer = objectKlassEquals(event, InputEvent) || objectKlassEquals(event, KeyboardEvent) ? null : event.clipboardData;
-          if (dataTransfer != null && selection !== null) {
-            const lexicalString = dataTransfer.getData('application/x-lexical-editor');
-            if (lexicalString) {
-              try {
-                const payload = JSON.parse(lexicalString);
-                if (payload.namespace === editor._config.namespace && Array.isArray(payload.nodes)) {
-                  payload.nodes.forEach(node => node.style = '')
-                  const nodes = $generateNodesFromSerializedNodes(payload.nodes);
-                  return selection.insertNodes(nodes);
-                }
-              } catch (_) {
-              }
-            }
-            const text = dataTransfer.getData('text/plain') || dataTransfer.getData('text/uri-list');
-            if (text != null) {
-              if ($isRangeSelection(selection)) {
-                const parts = text.split(/(\r?\n|\t)/);
-                if (parts[parts.length - 1] === '') {
-                  parts.pop();
-                }
-                for (let i = 0; i < parts.length; i++) {
-                  const currentSelection = $getSelection();
-                  if ($isRangeSelection(currentSelection)) {
-                    const part = parts[i];
-                    if (part === '\n' || part === '\r\n') {
-                      currentSelection.insertParagraph();
-                    } else if (part === '\t') {
-                      currentSelection.insertNodes([$createTabNode()]);
-                    } else {
-                      currentSelection.insertText(part);
-                    }
+                  const markCount = hiddenNodes.reduce((count, node) => { return node.mark ? count + 1 : count; }, 0);
+                  if (markCount === 0) {
+                    setToolbarState({ show: true, plain: false, single: true, mark: false });
+                  } else if (markCount === hiddenNodes.length) {
+                    setToolbarState({ show: true, plain: false, single: true, mark: true });
+                  } else {
+                    setToolbarState({ show: true, plain: false, single: false });
                   }
                 }
-              } else {
-                selection.insertRawText(text);
               }
             }
-          }
-        }, {
-          tag: 'paste'
-        });
-        return true;
-      },
-      COMMAND_PRIORITY_LOW,
-    );
-
-    editor.registerCommand(
-      CAN_UNDO_COMMAND,
-      (canUndo) => {
-        setCanUndo(canUndo);
-        return false;
-      },
-      COMMAND_PRIORITY_LOW,
-    );
-
-    editor.registerCommand(
-      CAN_REDO_COMMAND,
-      (canRedo) => {
-        setCanRedo(canRedo);
-        return false;
-      },
-      COMMAND_PRIORITY_LOW,
-    );
-
-    editor.registerCommand(
-      TOOLBAR_COMMAND,
-      (name) => {
-        editor.mouse = getToolbarPos();
-
-        const selection = $getSelection();
-        const nodes = selection.getNodes();
-
-        const hide = (mark) => {
-          let content = selection.getTextContent();
-          let node = new HiddenNode(content, undefined, mark);
-          selection.insertNodes([node]);
-          let new_selection = $createRangeSelection();
-          new_selection.setTextNodeRange(node, 0, node, content.length);
-          $setSelection(new_selection);
-        }
-
-        const mark_all = () => {
-          nodes.forEach(node => {
-            if (node instanceof HiddenNode) {
-              node.setMark(true);
-            }
-          });
-        }
-
-        const unmark_all = () => {
-          nodes.forEach(node => {
-            if (node instanceof HiddenNode) {
-              node.setMark(false);
-            }
-          });
-        }
-
-        const show_all = () => {
-          if (selection.isCollapsed()) {
-            let node = nodes[0];
-            let content = node.getTextContent();
-            let prev = node.getPreviousSibling();
-            let next = node.getNextSibling();
-            let begin = 0, end = content.length;
-            if (prev instanceof TextNode && !(prev instanceof HiddenNode)) {
-              content = prev.getTextContent() + content;
-              begin = prev.getTextContent().length, end += begin;
-              prev.remove();
-            }
-            if (next instanceof TextNode && !(next instanceof HiddenNode)) {
-              content = content + next.getTextContent();
-              next.remove();
-            }
-            node = node.replace(new TextNode(content));
-            let new_selection = $createRangeSelection();
-            new_selection.setTextNodeRange(node, begin, node, end);
-            $setSelection(new_selection);
           } else {
+            setToolbarState({ show: false });
+          }
+        });
+      }),
+
+      editor.registerCommand(
+        PASTE_COMMAND,
+        (event) => {
+          event.preventDefault();
+          editor.update(() => {
+            const selection = $getSelection();
+            const dataTransfer = objectKlassEquals(event, InputEvent) || objectKlassEquals(event, KeyboardEvent) ? null : event.clipboardData;
+            if (dataTransfer != null && selection !== null) {
+              const lexicalString = dataTransfer.getData('application/x-lexical-editor');
+              if (lexicalString) {
+                try {
+                  const payload = JSON.parse(lexicalString);
+                  if (payload.namespace === editor._config.namespace && Array.isArray(payload.nodes)) {
+                    payload.nodes.forEach(node => node.style = '')
+                    const nodes = $generateNodesFromSerializedNodes(payload.nodes);
+                    return selection.insertNodes(nodes);
+                  }
+                } catch (_) {
+                }
+              }
+              const text = dataTransfer.getData('text/plain') || dataTransfer.getData('text/uri-list');
+              if (text != null) {
+                if ($isRangeSelection(selection)) {
+                  const parts = text.split(/(\r?\n|\t)/);
+                  if (parts[parts.length - 1] === '') {
+                    parts.pop();
+                  }
+                  for (let i = 0; i < parts.length; i++) {
+                    const currentSelection = $getSelection();
+                    if ($isRangeSelection(currentSelection)) {
+                      const part = parts[i];
+                      if (part === '\n' || part === '\r\n') {
+                        currentSelection.insertParagraph();
+                      } else if (part === '\t') {
+                        currentSelection.insertNodes([$createTabNode()]);
+                      } else {
+                        currentSelection.insertText(part);
+                      }
+                    }
+                  }
+                } else {
+                  selection.insertRawText(text);
+                }
+              }
+            }
+          }, {
+            tag: 'paste'
+          });
+          return true;
+        },
+        COMMAND_PRIORITY_LOW,
+      ),
+
+      editor.registerCommand(
+        CAN_UNDO_COMMAND,
+        (canUndo) => {
+          setCanUndo(canUndo);
+          return false;
+        },
+        COMMAND_PRIORITY_LOW,
+      ),
+
+      editor.registerCommand(
+        CAN_REDO_COMMAND,
+        (canRedo) => {
+          setCanRedo(canRedo);
+          return false;
+        },
+        COMMAND_PRIORITY_LOW,
+      ),
+
+      editor.registerCommand(
+        TOOLBAR_COMMAND,
+        (name) => {
+          editor.mouse = getToolbarPos();
+
+          const selection = $getSelection();
+          const nodes = selection.getNodes();
+
+          const hide = (mark) => {
+            let content = selection.getTextContent();
+            let node = new HiddenNode(content, undefined, mark);
+            selection.insertNodes([node]);
+            let new_selection = $createRangeSelection();
+            new_selection.setTextNodeRange(node, 0, node, content.length);
+            $setSelection(new_selection);
+          }
+
+          const mark_all = () => {
             nodes.forEach(node => {
               if (node instanceof HiddenNode) {
-                node.replace(new TextNode(node.getTextContent()));
+                node.setMark(true);
               }
             });
           }
-        }
 
-        ({
-          hide: () => hide(false),
-          mark: () => hide(true),
-          mark_all,
-          unmark_all,
-          show_all
-        })[name]();
+          const unmark_all = () => {
+            nodes.forEach(node => {
+              if (node instanceof HiddenNode) {
+                node.setMark(false);
+              }
+            });
+          }
 
-        return true;
-      },
-      COMMAND_PRIORITY_LOW,
+          const show_all = () => {
+            if (selection.isCollapsed()) {
+              let node = nodes[0];
+              let content = node.getTextContent();
+              let prev = node.getPreviousSibling();
+              let next = node.getNextSibling();
+              let begin = 0, end = content.length;
+              if (prev instanceof TextNode && !(prev instanceof HiddenNode)) {
+                content = prev.getTextContent() + content;
+                begin = prev.getTextContent().length, end += begin;
+                prev.remove();
+              }
+              if (next instanceof TextNode && !(next instanceof HiddenNode)) {
+                content = content + next.getTextContent();
+                next.remove();
+              }
+              node = node.replace(new TextNode(content));
+              let new_selection = $createRangeSelection();
+              new_selection.setTextNodeRange(node, begin, node, end);
+              $setSelection(new_selection);
+            } else {
+              nodes.forEach(node => {
+                if (node instanceof HiddenNode) {
+                  node.replace(new TextNode(node.getTextContent()));
+                }
+              });
+            }
+          }
+
+          ({
+            hide: () => hide(false),
+            mark: () => hide(true),
+            mark_all,
+            unmark_all,
+            show_all
+          })[name]();
+
+          return true;
+        },
+        COMMAND_PRIORITY_LOW,
+      )
     );
   }, []);
 
