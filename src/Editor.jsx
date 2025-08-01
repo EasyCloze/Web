@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { $getSelection, $selectAll, $isRangeSelection, $createRangeSelection, $setSelection, $getRoot, $createParagraphNode, $isParagraphNode, $createTabNode, TextNode, createCommand, COMMAND_PRIORITY_LOW, SELECTION_CHANGE_COMMAND, UNDO_COMMAND, REDO_COMMAND, CAN_UNDO_COMMAND, CAN_REDO_COMMAND, PASTE_COMMAND } from 'lexical';
+import { $getSelection, $selectAll, $isRangeSelection, $createRangeSelection, $setSelection, $getRoot, $createParagraphNode, $isParagraphNode, $createTabNode, $addUpdateTag, HISTORIC_TAG, TextNode, createCommand, COMMAND_PRIORITY_LOW, SELECTION_CHANGE_COMMAND, UNDO_COMMAND, REDO_COMMAND, CAN_UNDO_COMMAND, CAN_REDO_COMMAND, PASTE_COMMAND } from 'lexical';
 import { objectKlassEquals } from '@lexical/utils';
 import { $generateNodesFromSerializedNodes } from '@lexical/clipboard';
 import { LexicalComposer } from '@lexical/react/LexicalComposer';
@@ -17,6 +17,7 @@ import Placeholder from './widget/Placeholder';
 import PositionAbsolute from './widget/PositionAbsolute';
 import './Editor.css';
 
+const TAG_NO_HISTORY = HISTORIC_TAG;
 const TOOLBAR_COMMAND = createCommand();
 
 const Content = (() => {
@@ -56,7 +57,7 @@ export default function Editor({ readonly, setEditorRef, getHighlight, getConten
       <LexicalComposer initialConfig={{ namespace: 'EasyCloze', editable: !readonly, editorState, theme: {}, nodes: [HiddenNode], onError(error) { throw error } }} >
         <RichTextPlugin contentEditable={<ContentEditable style={{ outline: 'none' }} inputMode='none' />} />
         <State setEditorRef={setEditorRef} getHighlight={getHighlight} setFocus={setFocus} setCanUndo={setCanUndo} setCanRedo={setCanRedo} />
-        <OnChangePlugin ignoreSelectionChange ignoreHistoryMergeTagChange onChange={editorState => setContent(Content.stringify(editorState.toJSON()))} />
+        <OnChangePlugin ignoreSelectionChange ignoreHistoryMergeTagChange onChange={(editorState, _, tags) => { if (!tags.has(TAG_NO_HISTORY)) { setContent(Content.stringify(editorState.toJSON())); } }} />
         <HistoryPlugin delay={500} />
         <TabIndentationPlugin />
       </LexicalComposer>
@@ -182,7 +183,12 @@ const State = ({ setEditorRef, getHighlight, setFocus, setCanUndo, setCanRedo })
         $setSelection(null);
       });
 
+      editor_trim();
+    }
+
+    function editor_trim() {
       editor.update(() => {
+        $addUpdateTag(TAG_NO_HISTORY);
         const root = $getRoot();
         let children = root.getChildren();
         while (children.length > 1 && $isParagraphNode(children.at(0)) && children.at(0).getTextContent().trim() === '') {
@@ -196,10 +202,13 @@ const State = ({ setEditorRef, getHighlight, setFocus, setCanUndo, setCanRedo })
       });
     }
 
+    editor_trim();
+
     editor.registerCommand(
       SELECTION_CHANGE_COMMAND,
       () => {
         editor.update(() => {
+          $addUpdateTag(TAG_NO_HISTORY);
           const selection = $getSelection();
           if (!$isRangeSelection(selection) || !selection.isCollapsed()) {
             return;
