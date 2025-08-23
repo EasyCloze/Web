@@ -438,8 +438,8 @@ const Toolbar = ({ getHighlight, setToolbarRef, getToolbarPos, command }) => {
     const parent_rect = ref.current.offsetParent.getBoundingClientRect();
     const pos = getToolbarPos();
     if (pos) {
-      ref.current.style.left = Math.max(0, Math.min(pos.x - 10 - body_rect.left, body_rect.width - rect.width - 5)) - (parent_rect.left - body_rect.left) + 'px';
-      ref.current.style.top = Math.max(0, Math.min(pos.y + 20 - body_rect.top, body_rect.height - rect.height - 5)) - (parent_rect.top - body_rect.top) + 'px';
+      ref.current.style.left = Math.max(0, Math.min(pos.x - 10 - body_rect.left, body_rect.width - rect.width - 10)) - (parent_rect.left - body_rect.left) + 'px';
+      ref.current.style.top = Math.max(0, Math.min(pos.y + 20 - body_rect.top, body_rect.height - rect.height - 10)) - (parent_rect.top - body_rect.top) + 'px';
     } else {
       ref.current.style.left = '10px';
       ref.current.style.top = parent_rect.height - 7 + 'px';
