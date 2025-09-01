@@ -205,7 +205,6 @@ const State = ({ setEditorRef, getHighlight, setFocus, setCanUndo, setCanRedo })
         SELECTION_CHANGE_COMMAND,
         () => {
           editor.update(() => {
-            $addUpdateTag(TAG_NO_HISTORY);
             const selection = $getSelection();
             if (!$isRangeSelection(selection) || !selection.isCollapsed()) {
               return;
@@ -221,6 +220,7 @@ const State = ({ setEditorRef, getHighlight, setFocus, setCanUndo, setCanRedo })
             if (selection.anchor.key !== last.__key || selection.anchor.offset !== last.getTextContentSize()) {
               return;
             }
+            $addUpdateTag(TAG_NO_HISTORY);
             root.append($createParagraphNode());
             root.append($createParagraphNode());
           });
