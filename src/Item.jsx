@@ -103,6 +103,7 @@ export default function ({ token, highlight, setItemRef, id, onUpdate, onDelete 
     if (getLocal().ver === 0) {
       setLocal({ ref: 0, ver: current_version(), val: getRemote().val });
       setFormat(highlight.value);
+      getEditorRef().setHighlight(highlight.value);
       Edit();
     }
   }, []);
