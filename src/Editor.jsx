@@ -204,22 +204,31 @@ const State = ({ setEditorRef, getHighlight, setFocus, setCanUndo, setCanRedo })
       editor.registerCommand(
         SELECTION_CHANGE_COMMAND,
         () => {
+          const selection = $getSelection();
+          if (!$isRangeSelection(selection) || !selection.isCollapsed()) {
+            return false;
+          }
+
+          const node = window.getSelection()?.anchorNode;
+          if (node && node.parentElement) {
+            const rect = (node.nodeType === Node.ELEMENT_NODE ? node : node.parentElement).getBoundingClientRect();
+            if (rect.top > window.innerHeight * 3 / 4) {
+              window.scrollTo({ top: window.scrollY + rect.top - window.innerHeight / 2, behavior: "smooth", });
+            }
+          }
+
+          const root = $getRoot();
+          let last = root.getChildren().at(-1);
+          if (!last || !last.isParentOf(selection.anchor.getNode())) {
+            return false;
+          }
+          while (last.getChildren && last.getChildren().length > 0) {
+            last = last.getChildren().at(-1);
+          }
+          if (selection.anchor.key !== last.__key || selection.anchor.offset !== last.getTextContentSize()) {
+            return false;
+          }
           editor.update(() => {
-            const selection = $getSelection();
-            if (!$isRangeSelection(selection) || !selection.isCollapsed()) {
-              return;
-            }
-            const root = $getRoot();
-            let last = root.getChildren().at(-1);
-            if (!last || !last.isParentOf(selection.anchor.getNode())) {
-              return;
-            }
-            while (last.getChildren && last.getChildren().length > 0) {
-              last = last.getChildren().at(-1);
-            }
-            if (selection.anchor.key !== last.__key || selection.anchor.offset !== last.getTextContentSize()) {
-              return;
-            }
             $addUpdateTag(TAG_NO_HISTORY);
             root.append($createParagraphNode());
             root.append($createParagraphNode());
