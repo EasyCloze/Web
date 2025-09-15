@@ -8,7 +8,7 @@ import { localJson } from './utility/local';
 import { useLocalStateJson } from './utility/localState';
 import { useRefGetSet } from './utility/refGetSet';
 import { useRefObj } from './utility/refObj';
-import { generate_local_id, key_remote, key_local } from './utility/id';
+import { generate_local_id, is_archive_id, key_remote, key_local } from './utility/id';
 import API from './utility/api';
 import Text from './lang/Text';
 import IconButton from './widget/IconButton';
@@ -20,6 +20,11 @@ import './List.css';
 
 const max_list_length = 6;
 
+function findArchiveIndex(list) {
+  const index = list.findIndex(id => is_archive_id(id));
+  return index === -1 ? list.length : index;
+}
+
 const min_sync_interval = 15 * 1000;
 const check_sync_interval = 3 * 60 * 1000;
 const op_delay_interval = 3 * 60 * 1000;
@@ -28,6 +33,7 @@ const idle_sync_interval = 10 * 60 * 1000;
 
 export default function ({ token, setToken, getMenuRef, setListRef }) {
   const [list, setList] = useLocalStateJson('list', []);
+  const archiveIndex = findArchiveIndex(list);
   const [getErrorRef, setErrorRef] = useRefGetSet();
   const [getLengthRef, setLengthRef] = useRefGetSet();
   const highlight = useRefObj(() => {
@@ -160,9 +166,9 @@ export default function ({ token, setToken, getMenuRef, setListRef }) {
     }
   }, [token]);
 
-  function onCreate(index) {
-    const id = generate_local_id();
-    setList([...list, id]);
+  function onCreate(id) {
+    const index = archiveIndex;
+    setList([...list.slice(0, index), id, ...list.slice(index, list.length)]);
     if (sync_state.syncing) {
       sync_state.new_item_buffer.push(id);
     }
@@ -182,15 +188,28 @@ export default function ({ token, setToken, getMenuRef, setListRef }) {
       sync_state.deleting_item_buffer.push(id);
     }
     sync_state.manager.ensure_delete_delay();
+    focusNext(id);
+  }
 
+  function focusNext(id) {
     const index = list.indexOf(id);
+    const begin = index < archiveIndex ? 0 : archiveIndex;
+    const end = index < archiveIndex ? archiveIndex : list.length;
     let find_next = true;
-    for (let next = index + 1; find_next && next < list.length; next++) {
+    for (let next = index + 1; find_next && next < end; next++) {
       find_next = !item_map.get(list[next]).edit();
     }
-    for (let prev = index - 1; find_next && prev >= 0; prev--) {
+    for (let prev = index - 1; find_next && prev >= begin; prev--) {
       find_next = !item_map.get(list[prev]).edit();
     }
+  }
+
+  function onArchive(id_new) {
+    setList([...list, id_new]);
+  }
+
+  function onUnarchive(id_new) {
+    onCreate(id_new);
   }
 
   async function fetch_sync(token, body) {
@@ -223,7 +242,7 @@ export default function ({ token, setToken, getMenuRef, setListRef }) {
   async function sync() {
     let local = [];
 
-    list.slice(0, max_list_length).forEach(id => {
+    list.slice(0, Math.min(max_list_length, archiveIndex)).forEach(id => {
       const item = item_map.get(id).sync();
       if (item) {
         local.push(item);
@@ -335,13 +354,13 @@ export default function ({ token, setToken, getMenuRef, setListRef }) {
 
     return (
       <Tooltip title={overlength && <Text id='list.length.tooltip' />}>
-        <div id='list-length' className={overlength && 'overlength'}>- {<Text id='list.length.text' />} {list.length} -</div>
+        <div id='list-length' className={overlength && 'overlength'}>- {<Text id='list.length.text' />} {archiveIndex} -</div>
       </Tooltip>
     )
   }
 
   useEffect(() => {
-    getLengthRef().setOverlength(token && list.length > max_list_length);
+    getLengthRef().setOverlength(token && archiveIndex > max_list_length);
   });
 
   return (
@@ -349,7 +368,7 @@ export default function ({ token, setToken, getMenuRef, setListRef }) {
       <Error />
       <div className='list'>
         {
-          list.map((id, index) => (
+          list.slice(0, archiveIndex).map((id, index) => (
             <Item
               key={id}
               token={token}
@@ -358,15 +377,36 @@ export default function ({ token, setToken, getMenuRef, setListRef }) {
               id={id}
               onUpdate={() => onUpdate(index)}
               onDelete={() => onDelete(id)}
+              onArchive={onArchive}
             />
           ))
         }
         <Length />
+        {
+          archiveIndex < list.length &&
+          <div className='archive' >
+            <div className='archive-title'><Text id='list.archive.text' /></div>
+            {
+              list.slice(archiveIndex, list.length).map(id => (
+                <Item
+                  key={id}
+                  token={token}
+                  highlight={highlight}
+                  setItemRef={val => item_map.set(id, val)}
+                  id={id}
+                  onUpdate={() => {}}
+                  onDelete={() => focusNext(id)}
+                  onUnarchive={onUnarchive}
+                />
+              ))
+            }
+          </div>
+        }
       </div>
       <PositionFixed right='20px' bottom='20px'>
         <IconButton icon={<VerticalAlignTopIcon />} title={<Text id='list.scroll_top.tooltip' />} onClick={() => window.scrollTo({ top: 0, behavior: 'instant' })} />
         <IconButton icon={<VerticalAlignBottomIcon />} title={<Text id='list.scroll_bottom.tooltip' />} onClick={() => window.scrollTo({ top: document.body.scrollHeight, behavior: 'instant' })} />
-        <IconButton icon={<AddIcon />} title={<Text id='list.create.tooltip' />} onClick={() => onCreate(list.length)} />
+        <IconButton icon={<AddIcon />} title={<Text id='list.create.tooltip' />} onClick={() => onCreate(generate_local_id())} />
       </PositionFixed>
     </>
   )

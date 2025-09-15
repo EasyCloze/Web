@@ -21,6 +21,19 @@
   opacity: 100%;
 }
 
+.archive {
+  margin-top: 20px;
+  padding: 10px 0px;
+  background-color: ivory;
+}
+
+.archive-title {
+  padding: 10px 5px;
+  font-style: italic;
+  font-size: larger;
+  color: gray;
+}
+
 @media print {
   .list {
     visibility: visible;

@@ -3,10 +3,12 @@ import DeleteIcon from '@mui/icons-material/Delete';
 import RestoreIcon from '@mui/icons-material/Restore';
 import UndoIcon from '@mui/icons-material/Undo';
 import RedoIcon from '@mui/icons-material/Redo';
+import ArchiveIcon from '@mui/icons-material/Archive';
+import UnarchiveIcon from '@mui/icons-material/Unarchive';
 import { localJson } from './utility/local';
 import { useLocalRefJson } from './utility/localRef';
 import { useRefGetSet } from './utility/refGetSet';
-import { generate_local_id, key_remote, key_local, current_version, get_version_date } from './utility/id';
+import { generate_local_id, generate_archive_id, is_archive_id, key_remote, key_local, current_version, get_version_date } from './utility/id';
 import Text from './lang/Text';
 import IconButton from './widget/IconButton';
 import Button from './widget/Button';
@@ -21,7 +23,7 @@ import './Item.css';
 
 const val_length_limit = 4096;
 
-export default function ({ token, highlight, setItemRef, id, onUpdate, onDelete }) {
+export default function ({ token, highlight, setItemRef, id, onUpdate, onDelete, onArchive, onUnarchive }) {
   const [getRemote, setRemote] = useLocalRefJson(key_remote(id), { ver: 0, val: "{\"r\":{\"c\":[{\"c\":[],\"i\":0,\"t\":\"p\"}],\"t\":\"r\"}}" });
   const [getLocal, setLocal] = useLocalRefJson(key_local(id), { ref: 0, ver: 0, val: null });
   const [getTemp, setTemp] = useRefGetSet({ ver: 0, val: null });
@@ -31,46 +33,54 @@ export default function ({ token, highlight, setItemRef, id, onUpdate, onDelete 
 
   function current_state() {
     const ver_remote = getRemote().ver, { ref, ver, val } = getLocal();
-    if (ref === ver_remote) {
-      if (ver_remote === 0) {
-        if (ver >= 0) {
-          if (!token) {
-            return 'normal';
-          } else if (ver === 0 || val.length <= val_length_limit) {
-            return 'created';
-          } else {
-            return 'created invalid';
-          }
-        } else {
-          return 'deleted created';
-        }
+    if (is_archive_id(id)) {
+      if (ver > 0) {
+        return 'archived';
       } else {
-        if (!val) {
-          if (ver > 0) {
-            return 'normal';
-          } else {
-            return 'deleted normal';
-          }
-        } else {
-          if (ver > 0) {
-            if (val.length <= val_length_limit) {
-              return 'updated';
-            } else {
-              return 'updated invalid';
-            }
-          } else {
-            return 'deleted updated';
-          }
-        }
+        return 'deleted archived';
       }
     } else {
-      if (ver_remote === 0) {
-        return 'conflict missing';
-      } else {
-        if (ver > 0) {
-          return 'conflict updated';
+      if (ref === ver_remote) {
+        if (ver_remote === 0) {
+          if (ver >= 0) {
+            if (!token) {
+              return 'normal';
+            } else if (ver === 0 || val.length <= val_length_limit) {
+              return 'created';
+            } else {
+              return 'created invalid';
+            }
+          } else {
+            return 'deleted created';
+          }
         } else {
-          return 'conflict deleted';
+          if (!val) {
+            if (ver > 0) {
+              return 'normal';
+            } else {
+              return 'deleted normal';
+            }
+          } else {
+            if (ver > 0) {
+              if (val.length <= val_length_limit) {
+                return 'updated';
+              } else {
+                return 'updated invalid';
+              }
+            } else {
+              return 'deleted updated';
+            }
+          }
+        }
+      } else {
+        if (ver_remote === 0) {
+          return 'conflict missing';
+        } else {
+          if (ver > 0) {
+            return 'conflict updated';
+          } else {
+            return 'conflict deleted';
+          }
         }
       }
     }
@@ -79,6 +89,7 @@ export default function ({ token, highlight, setItemRef, id, onUpdate, onDelete 
   function editor_available() {
     switch (current_state()) {
       case 'normal':
+      case 'archived':
       case 'created':
       case 'updated':
       case 'created invalid':
@@ -88,6 +99,7 @@ export default function ({ token, highlight, setItemRef, id, onUpdate, onDelete 
       case 'conflict updated':
         return true;
       case 'deleted normal':
+      case 'deleted archived':
       case 'deleted created':
       case 'deleted updated':
         return false;
@@ -101,7 +113,7 @@ export default function ({ token, highlight, setItemRef, id, onUpdate, onDelete 
 
   useEffect(() => {
     if (getLocal().ver === 0) {
-      setLocal({ ref: 0, ver: current_version(), val: getRemote().val });
+      setLocal({ ref: 0, ver: current_version(), val: getLocal().val || getRemote().val });
       setFormat(highlight.value);
       getEditorRef().setHighlight(highlight.value);
       Edit();
@@ -215,14 +227,32 @@ export default function ({ token, highlight, setItemRef, id, onUpdate, onDelete 
     }
   }
 
+  function Archive() {
+    const id_new = generate_archive_id();
+    const [, setLocalNew] = localJson(key_local(id_new));
+    setLocalNew({ ref: 0, ver: getLocal().ver, val: getLocal().val || getRemote().val });
+    onArchive(id_new);
+    DeleteOrRestore();
+  }
+
+  function Unarchive() {
+    const id_new = generate_local_id();
+    const [, setLocalNew] = localJson(key_local(id_new));
+    setLocalNew({ ref: 0, ver: 0, val: getLocal().val });
+    onUnarchive(id_new);
+    DeleteOrRestore();
+  }
+
   setItemRef({
     edit: () => editor_available() ? (Edit(), true) : false,
     sync: () => {
       const ver_remote = getRemote().ver;
       const { ref, ver, val } = getLocal();
       switch (current_state()) {
+        case 'archived':
         case 'created invalid':
         case 'deleted created':
+        case 'deleted archived':
         case 'conflict missing':
           return null;
         case 'created':
@@ -315,6 +345,8 @@ export default function ({ token, highlight, setItemRef, id, onUpdate, onDelete 
         ConflictDelete,
         ConflictSetRemote,
         ConflictSetLocal,
+        Archive,
+        Unarchive,
       }}
     >
       <Editor
@@ -352,6 +384,7 @@ const Frame = ({ initialState, initialFormat, onFocus, setFrameRef, getRemote, g
   function current_border_color() {
     switch (state) {
       case 'normal':
+      case 'archived':
         return focused ? 'orange' : 'lightsteelblue';
       case 'created':
       case 'updated':
@@ -359,6 +392,7 @@ const Frame = ({ initialState, initialFormat, onFocus, setFrameRef, getRemote, g
       case 'created invalid':
       case 'updated invalid':
       case 'deleted normal':
+      case 'deleted archived':
       case 'deleted created':
       case 'deleted updated':
       case 'conflict deleted':
@@ -372,6 +406,7 @@ const Frame = ({ initialState, initialFormat, onFocus, setFrameRef, getRemote, g
     function current_message() {
       switch (state) {
         case 'normal':
+        case 'archived':
         case 'created':
         case 'updated':
           return null;
@@ -379,6 +414,7 @@ const Frame = ({ initialState, initialFormat, onFocus, setFrameRef, getRemote, g
         case 'updated invalid':
           return 'item.error.overlength.message';
         case 'deleted normal':
+        case 'deleted archived':
         case 'deleted created':
         case 'deleted updated':
           return 'item.deleted.message';
@@ -402,6 +438,7 @@ const Frame = ({ initialState, initialFormat, onFocus, setFrameRef, getRemote, g
   function current_content() {
     switch (state) {
       case 'normal':
+      case 'archived':
       case 'created':
       case 'updated':
       case 'created invalid':
@@ -409,6 +446,7 @@ const Frame = ({ initialState, initialFormat, onFocus, setFrameRef, getRemote, g
       case 'conflict missing':
         return children;
       case 'deleted normal':
+      case 'deleted archived':
       case 'deleted created':
       case 'deleted updated':
         return null;
@@ -440,12 +478,14 @@ const Frame = ({ initialState, initialFormat, onFocus, setFrameRef, getRemote, g
     function current_actions() {
       switch (state) {
         case 'normal':
+        case 'archived':
         case 'created':
         case 'updated':
         case 'created invalid':
         case 'updated invalid':
           return null;
         case 'deleted normal':
+        case 'deleted archived':
         case 'deleted created':
         case 'deleted updated':
           return <Button onClick={command.DeleteOrRestore} ><Text id='item.action.restore.button' /></Button>
@@ -494,6 +534,7 @@ const Frame = ({ initialState, initialFormat, onFocus, setFrameRef, getRemote, g
     function current_commands() {
       switch (state) {
         case 'normal':
+        case 'archived':
         case 'created':
         case 'updated':
         case 'created invalid':
@@ -501,12 +542,17 @@ const Frame = ({ initialState, initialFormat, onFocus, setFrameRef, getRemote, g
           return (
             <>
               <IconButton icon={<DeleteIcon htmlColor="lightcoral" />} title={<Text id='item.command.delete.tooltip' />} onClick={command.DeleteOrRestore} />
-              <Placeholder width='10px' />
+              {
+                state === 'archived' ?
+                  <IconButton icon={<UnarchiveIcon />} title={<Text id={'item.command.unarchive.tooltip'} />} onClick={command.Unarchive} /> :
+                  <IconButton icon={<ArchiveIcon />} title={<Text id={'item.command.archive.tooltip'} />} onClick={command.Archive} />
+              }
               <IconButton icon={<UndoIcon />} disabled={!canUndo} title={<Text id='item.command.undo.tooltip' />} onClick={command.Undo} />
-              <Placeholder width='10px' />
               <IconButton icon={<RedoIcon />} disabled={!canRedo} title={<Text id='item.command.redo.tooltip' />} onClick={command.Redo} />
-              <Placeholder width='10px' />
-              <IconButton icon={<RestoreIcon />} disabled={state === 'normal'} title={<Text id='item.command.revert.tooltip' />} onClick={command.Revert} />
+              {
+                state !== 'archived' &&
+                <IconButton icon={<RestoreIcon />} disabled={state === 'normal'} title={<Text id='item.command.revert.tooltip' />} onClick={command.Revert} />
+              }
             </>
           )
         case 'conflict deleted':
@@ -515,9 +561,7 @@ const Frame = ({ initialState, initialFormat, onFocus, setFrameRef, getRemote, g
           return (
             <>
               <IconButton icon={<DeleteIcon htmlColor="lightcoral" />} title={<Text id='item.command.delete.tooltip' />} onClick={command.ConflictDelete} />
-              <Placeholder width='10px' />
               <IconButton icon={<UndoIcon />} disabled={!canUndo} title={<Text id='item.command.undo.tooltip' />} onClick={command.Undo} />
-              <Placeholder width='10px' />
               <IconButton icon={<RedoIcon />} disabled={!canRedo} title={<Text id='item.command.redo.tooltip' />} onClick={command.Redo} />
             </>
           )

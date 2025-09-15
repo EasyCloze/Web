@@ -2,6 +2,14 @@ export function generate_local_id(hint: number) {
   return 'L' + (hint ? hint : Date.now());
 }
 
+export function generate_archive_id(hint: number) {
+  return 'LA' + (hint ? hint : Date.now());
+}
+
+export function is_archive_id(id: string) {
+  return id.startsWith('LA');
+}
+
 export function key_remote(id: string) {
   return id + ':remote';
 }
