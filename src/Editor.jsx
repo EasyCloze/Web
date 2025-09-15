@@ -137,7 +137,7 @@ const State = ({ setEditorRef, getHighlight, setFocus, setCanUndo, setCanRedo })
     setHighlight: highlight => getToolbarRef().setHighlight(highlight),
     edit: () => {
       editor.getRootElement().inputMode = 'text';
-      editor.focus();
+      editor.focus(undefined, { defaultSelection: 'rootStart' });
     },
     setContent: content => {
       editor.update(() => {
