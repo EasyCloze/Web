@@ -210,6 +210,8 @@ const State = ({ setEditorRef, getHighlight, setFocus, setCanUndo, setCanRedo })
             const rect = (node.nodeType === Node.ELEMENT_NODE ? node : node.parentElement).getBoundingClientRect();
             if (rect.top > window.innerHeight * 3 / 4) {
               window.scrollTo({ top: window.scrollY + rect.top - window.innerHeight / 2, behavior: "smooth", });
+            } else if (rect.top < 50) {
+              window.scrollTo({ top: window.scrollY + rect.top - 100, behavior: "smooth", });
             }
           }
 
