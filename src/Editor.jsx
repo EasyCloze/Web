@@ -157,10 +157,8 @@ const State = ({ setEditorRef, getHighlight, setFocus, setCanUndo, setCanRedo })
     setCanRedo(false);
 
     const root = editor.getRootElement();
-    root.ontouchstart =
-      root.ontouchmove = event => { const touch = event.targetTouches[0]; editor.mouse = { x: touch.clientX, y: touch.clientY }; }
-    root.onmousedown =
-      root.onmousemove = event => { editor.mouse = { x: event.clientX, y: event.clientY }; }
+    root.onpointerdown =
+      root.onpointermove = event => { editor.mouse = { x: event.clientX, y: event.clientY }; }
     root.onfocus = () => { editor.mouse || root.inputMode !== 'none' ? setFocus(true) : root.blur(); }
     root.onblur = () => { setFocus(false); editor.mouse = undefined; root.inputMode = 'none'; editor_onblur(); }
     root.onkeydown = event => {
