@@ -578,7 +578,7 @@ const Frame = ({ initialState, initialFormat, onFocus, setFrameRef, getRemote, g
     }
 
     return (
-      <PositionFixed left='20px' bottom='20px' onMouseDown={event => event.preventDefault()}>
+      <PositionFixed left='20px' bottom='20px' onPointerDown={event => event.preventDefault()}>
         {commands}
       </PositionFixed>
     )
