@@ -197,10 +197,10 @@ export default function ({ token, setToken, getMenuRef, setListRef }) {
     const end = index < archiveIndex ? archiveIndex : list.length;
     let find_next = true;
     for (let next = index + 1; find_next && next < end; next++) {
-      find_next = !item_map.get(list[next]).edit();
+      find_next = !item_map.get(list[next]).focus();
     }
     for (let prev = index - 1; find_next && prev >= begin; prev--) {
-      find_next = !item_map.get(list[prev]).edit();
+      find_next = !item_map.get(list[prev]).focus();
     }
   }
 

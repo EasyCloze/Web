@@ -135,10 +135,8 @@ const State = ({ setEditorRef, getHighlight, setFocus, setCanUndo, setCanRedo })
 
   setEditorRef({
     setHighlight: highlight => getToolbarRef().setHighlight(highlight),
-    edit: () => {
-      editor.getRootElement().inputMode = 'text';
-      editor.focus(undefined, { defaultSelection: 'rootStart' });
-    },
+    focus: () => editor.focus(undefined, { defaultSelection: 'rootStart' }),
+    edit: () => editor.getRootElement().inputMode = 'text',
     setContent: content => {
       editor.update(() => {
         editor.setEditorState(editor.parseEditorState(Content.parse(content)));
@@ -159,7 +157,7 @@ const State = ({ setEditorRef, getHighlight, setFocus, setCanUndo, setCanRedo })
     const root = editor.getRootElement();
     root.onpointerdown =
       root.onpointermove = event => { editor.mouse = { x: event.clientX, y: event.clientY }; }
-    root.onfocus = () => { editor.mouse || root.inputMode !== 'none' ? setFocus(true) : root.blur(); }
+    root.onfocus = () => setFocus(true)
     root.onblur = () => { setFocus(false); editor.mouse = undefined; root.inputMode = 'none'; editor_onblur(); }
     root.onkeydown = event => {
       if (event.ctrlKey) {

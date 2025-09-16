@@ -116,7 +116,7 @@ export default function ({ token, highlight, setItemRef, id, onUpdate, onDelete,
       setLocal({ ref: 0, ver: current_version(), val: getLocal().val || getRemote().val });
       setFormat(highlight.value);
       getEditorRef().setHighlight(highlight.value);
-      Edit();
+      Focus(); Edit();
     }
   }, []);
 
@@ -174,6 +174,10 @@ export default function ({ token, highlight, setItemRef, id, onUpdate, onDelete,
 
   function SelectAll() {
     getEditorRef().selectAll();
+  }
+
+  function Focus() {
+    getEditorRef().focus();
   }
 
   function Edit() {
@@ -244,7 +248,7 @@ export default function ({ token, highlight, setItemRef, id, onUpdate, onDelete,
   }
 
   setItemRef({
-    edit: () => editor_available() ? (Edit(), true) : false,
+    focus: () => editor_available() ? (Focus(), true) : false,
     sync: () => {
       const ver_remote = getRemote().ver;
       const { ref, ver, val } = getLocal();
