@@ -27,6 +27,9 @@ export default defineConfig({
           }
         ]
       },
+      workbox: {
+        importScripts: ['/service-worker/notification.js']
+      },
       devOptions: {
         enabled: true
       }

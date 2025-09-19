@@ -24,7 +24,7 @@ export default function ({ setDialogRef, token, setToken }) {
   function current_dialog() {
     switch (dialog) {
       case 'setting':
-        return <Setting token={token} setToken={setToken} user={getUser()} setDialog={setDialog} />
+        return <Setting setError={setError} token={token} setToken={setToken} user={getUser()} setDialog={setDialog} />
       case 'about':
         return <About />
       case 'signup':
