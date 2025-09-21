@@ -7,6 +7,9 @@ export default defineConfig({
     react(),
     VitePWA({
       registerType: 'autoUpdate',
+      strategies: 'injectManifest',
+      srcDir: 'src',
+      filename: 'sw.js',
       manifest: {
         'name': 'Easy Cloze',
         'short_name': 'Easy Cloze',
@@ -26,12 +29,6 @@ export default defineConfig({
             'type': 'image/png'
           }
         ]
-      },
-      workbox: {
-        importScripts: ['/service-worker/notification.js']
-      },
-      devOptions: {
-        enabled: true
       }
     })
   ],
