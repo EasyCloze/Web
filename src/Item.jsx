@@ -113,7 +113,7 @@ export default function ({ token, highlight, setItemRef, id, onUpdate, onDelete,
 
   useEffect(() => {
     if (getLocal().ver === 0) {
-      setLocal({ ref: 0, ver: current_version(), val: getLocal().val || getRemote().val });
+      setLocal({ ref: 0, ver: current_version(), val: getRemote().val });
       setFormat(highlight.value);
       getEditorRef().setHighlight(highlight.value);
       Focus(); Edit();
@@ -242,7 +242,7 @@ export default function ({ token, highlight, setItemRef, id, onUpdate, onDelete,
   function Unarchive() {
     const id_new = generate_local_id();
     const [, setLocalNew] = localJson(key_local(id_new));
-    setLocalNew({ ref: 0, ver: 0, val: getLocal().val });
+    setLocalNew({ ref: 0, ver: getLocal().ver, val: getLocal().val });
     onUnarchive(id_new);
     DeleteOrRestore();
   }
