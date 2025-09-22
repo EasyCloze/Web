@@ -16,7 +16,7 @@ self.addEventListener('notificationclick', event => {
             await client.focus();
             return;
         }
-        await clients.openWindow('/');
+        await clients.openWindow(self.registration.scope);
     })());
 });
 
