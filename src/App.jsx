@@ -1,3 +1,4 @@
+import { useEffect } from 'react';
 import { useLocalState } from './utility/localState';
 import { useRefGetSet } from './utility/refGetSet';
 import LanguageProvider from './lang/Provider';
@@ -8,6 +9,19 @@ export default function () {
   const [token, setToken] = useLocalState('token');
   const [getMenuRef, setMenuRef] = useRefGetSet();
   const [getListRef, setListRef] = useRefGetSet();
+
+  useEffect(() => {
+    async function closeNotification() {
+      if (document.visibilityState === "visible") {
+        const registration = await navigator.serviceWorker.ready;
+        const notifications = await registration.getNotifications();
+        notifications.forEach(n => n.close());
+      }
+    }
+    closeNotification();
+    document.addEventListener('visibilitychange', closeNotification);
+    return () => document.removeEventListener('visibilitychange', closeNotification);
+  }, []);
 
   return (
     <LanguageProvider>

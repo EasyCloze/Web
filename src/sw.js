@@ -9,8 +9,8 @@ precacheAndRoute(self.__WB_MANIFEST);
 
 
 self.addEventListener('notificationclick', event => {
-    event.notification.close();
     event.waitUntil((async () => {
+        event.notification.close();
         const clientList = await clients.matchAll({ type: 'window', includeUncontrolled: true });
         for (const client of clientList) {
             await client.focus();
@@ -21,7 +21,13 @@ self.addEventListener('notificationclick', event => {
 });
 
 self.addEventListener('periodicsync', event => {
-    if (event.tag === 'reminder') {
-        event.waitUntil(self.registration.showNotification('Daily Reminder'));
-    }
+    event.waitUntil((async () => {
+        const clientList = await clients.matchAll({ type: 'window', includeUncontrolled: true });
+        if (clientList.some(c => c.visibilityState === "visible")) {
+            return;
+        }
+        if (event.tag === 'reminder') {
+            await self.registration.showNotification('Daily Reminder');
+        }
+    })());
 });
