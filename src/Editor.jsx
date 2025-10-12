@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { $getSelection, $selectAll, $isRangeSelection, $createRangeSelection, $setSelection, $getRoot, $createParagraphNode, $isParagraphNode, $createTabNode, $addUpdateTag, HISTORIC_TAG, TextNode, createCommand, COMMAND_PRIORITY_LOW, SELECTION_CHANGE_COMMAND, UNDO_COMMAND, REDO_COMMAND, CAN_UNDO_COMMAND, CAN_REDO_COMMAND, PASTE_COMMAND } from 'lexical';
+import { $getSelection, $selectAll, $isRangeSelection, $createRangeSelection, $setSelection, $getRoot, $createParagraphNode, $isParagraphNode, $createTabNode, $addUpdateTag, HISTORIC_TAG, TextNode, createCommand, COMMAND_PRIORITY_LOW, FOCUS_COMMAND, BLUR_COMMAND, SELECTION_CHANGE_COMMAND, UNDO_COMMAND, REDO_COMMAND, CAN_UNDO_COMMAND, CAN_REDO_COMMAND, PASTE_COMMAND } from 'lexical';
 import { mergeRegister, objectKlassEquals } from '@lexical/utils';
 import { $generateNodesFromSerializedNodes } from '@lexical/clipboard';
 import { LexicalComposer } from '@lexical/react/LexicalComposer';
@@ -157,8 +157,6 @@ const State = ({ setEditorRef, getHighlight, setFocus, setCanUndo, setCanRedo })
     const root = editor.getRootElement();
     root.onpointerdown =
       root.onpointermove = event => { editor.mouse = { x: event.clientX, y: event.clientY }; }
-    root.onfocus = () => setFocus(true)
-    root.onblur = () => { setFocus(false); editor.mouse = undefined; root.inputMode = 'none'; editor_onblur(); }
     root.onkeydown = event => {
       if (event.ctrlKey) {
         switch (event.code) {
@@ -168,14 +166,6 @@ const State = ({ setEditorRef, getHighlight, setFocus, setCanUndo, setCanRedo })
         }
         event.preventDefault();
       }
-    }
-
-    function editor_onblur() {
-      editor.update(() => {
-        $setSelection(null);
-      });
-
-      editor_trim();
     }
 
     function editor_trim() {
@@ -197,6 +187,36 @@ const State = ({ setEditorRef, getHighlight, setFocus, setCanUndo, setCanRedo })
     editor_trim();
 
     return mergeRegister(
+      editor.registerCommand(
+        FOCUS_COMMAND,
+        () => {
+          setFocus(true);
+          if (!editor.mouse && editor.prevSelection) {
+            editor.update(() => {
+              $setSelection(editor.prevSelection);
+            });
+          }
+          return false;
+        },
+        COMMAND_PRIORITY_LOW
+      ),
+
+      editor.registerCommand(
+        BLUR_COMMAND,
+        () => {
+          setFocus(false);
+          root.inputMode = 'none';
+          editor.mouse = undefined;
+          editor.update(() => {
+            editor.prevSelection = $getSelection();
+            $setSelection(null);
+          });
+          editor_trim();
+          return false;
+        },
+        COMMAND_PRIORITY_LOW
+      ),
+
       editor.registerCommand(
         SELECTION_CHANGE_COMMAND,
         () => {
