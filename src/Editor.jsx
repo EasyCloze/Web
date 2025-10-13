@@ -296,47 +296,34 @@ const State = ({ setEditorRef, getHighlight, setFocus, setCanUndo, setCanRedo })
       editor.registerCommand(
         PASTE_COMMAND,
         (event) => {
+          if (!objectKlassEquals(event, ClipboardEvent)) {
+            return false;
+          }
+          const dataTransfer = event.clipboardData;
+          if (!dataTransfer) {
+            return false;
+          }
           event.preventDefault();
           editor.update(() => {
             const selection = $getSelection();
-            const dataTransfer = objectKlassEquals(event, InputEvent) || objectKlassEquals(event, KeyboardEvent) ? null : event.clipboardData;
-            if (dataTransfer != null && selection !== null) {
-              const lexicalString = dataTransfer.getData('application/x-lexical-editor');
-              if (lexicalString) {
-                try {
-                  const payload = JSON.parse(lexicalString);
-                  if (payload.namespace === editor._config.namespace && Array.isArray(payload.nodes)) {
-                    payload.nodes.forEach(node => node.style = '')
-                    const nodes = $generateNodesFromSerializedNodes(payload.nodes);
-                    return selection.insertNodes(nodes);
-                  }
-                } catch (_) {
+            if (!selection || !$isRangeSelection(selection)) {
+              return;
+            }
+            const lexicalString = dataTransfer.getData('application/x-lexical-editor');
+            if (lexicalString) {
+              try {
+                const payload = JSON.parse(lexicalString);
+                if (payload.namespace === editor._config.namespace && Array.isArray(payload.nodes)) {
+                  payload.nodes.forEach(node => node.style = '');
+                  selection.insertNodes($generateNodesFromSerializedNodes(payload.nodes));
+                  return;
                 }
+              } catch (_) {
               }
-              const text = dataTransfer.getData('text/plain') || dataTransfer.getData('text/uri-list');
-              if (text != null) {
-                if ($isRangeSelection(selection)) {
-                  const parts = text.split(/(\r?\n|\t)/);
-                  if (parts[parts.length - 1] === '') {
-                    parts.pop();
-                  }
-                  for (let i = 0; i < parts.length; i++) {
-                    const currentSelection = $getSelection();
-                    if ($isRangeSelection(currentSelection)) {
-                      const part = parts[i];
-                      if (part === '\n' || part === '\r\n') {
-                        currentSelection.insertParagraph();
-                      } else if (part === '\t') {
-                        currentSelection.insertNodes([$createTabNode()]);
-                      } else {
-                        currentSelection.insertText(part);
-                      }
-                    }
-                  }
-                } else {
-                  selection.insertRawText(text);
-                }
-              }
+            }
+            const text = dataTransfer.getData('text/plain') || dataTransfer.getData('text/uri-list');
+            if (text) {
+              selection.insertRawText(text);
             }
           }, {
             tag: 'paste'
