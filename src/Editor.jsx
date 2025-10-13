@@ -207,11 +207,11 @@ const State = ({ setEditorRef, getHighlight, setFocus, setCanUndo, setCanRedo })
           setFocus(false);
           root.inputMode = 'none';
           editor.mouse = undefined;
+          editor_trim();
           editor.update(() => {
             editor.prevSelection = $getSelection();
             $setSelection(null);
           });
-          editor_trim();
           return false;
         },
         COMMAND_PRIORITY_LOW
