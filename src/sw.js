@@ -1,5 +1,6 @@
 import { clientsClaim } from 'workbox-core';
 import { cleanupOutdatedCaches, precacheAndRoute } from 'workbox-precaching';
+import db from './utility/db';
 
 self.skipWaiting();
 clientsClaim();
@@ -27,7 +28,11 @@ self.addEventListener('periodicsync', event => {
             return;
         }
         if (event.tag === 'reminder') {
-            await self.registration.showNotification('Daily Reminder');
+            const list = (await db.getAllUnion()).slice(0, 5).join(' ');
+            await self.registration.showNotification('Daily Reminder', {
+                body: list ? 'Time to review: ' + list : '',
+                tag: 'reminder'
+            });
         }
     })());
 });

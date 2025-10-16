@@ -9,6 +9,7 @@ import { useLocalStateJson } from './utility/localState';
 import { useRefGetSet } from './utility/refGetSet';
 import { useRefObj } from './utility/refObj';
 import { generate_local_id, is_archive_id, key_remote, key_local } from './utility/id';
+import db from './utility/db';
 import API from './utility/api';
 import Text from './lang/Text';
 import IconButton from './widget/IconButton';
@@ -165,6 +166,10 @@ export default function ({ token, setToken, getMenuRef, setListRef }) {
       }).filter(id => id).sort());
     }
   }, [token]);
+
+  useEffect(() => {
+    db.setList(list);
+  }, [list]);
 
   function onCreate(id) {
     const index = archiveIndex;

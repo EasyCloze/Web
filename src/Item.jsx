@@ -9,6 +9,7 @@ import { localJson } from './utility/local';
 import { useLocalRefJson } from './utility/localRef';
 import { useRefGetSet } from './utility/refGetSet';
 import { generate_local_id, generate_archive_id, is_archive_id, key_remote, key_local, current_version, get_version_date } from './utility/id';
+import db from './utility/db';
 import Text from './lang/Text';
 import IconButton from './widget/IconButton';
 import Button from './widget/Button';
@@ -22,6 +23,10 @@ import Editor from './Editor';
 import './Item.css';
 
 const val_length_limit = 4096;
+
+function getHiddenList(content) {
+  return [...content.matchAll(/"x":"(.*?)"/g)].filter(m => /"t":"h"/.test(content.slice(m.index, content.indexOf('}', m.index)))).map(m => m[1]);
+}
 
 export default function ({ token, highlight, setItemRef, id, onUpdate, onDelete, onArchive, onUnarchive }) {
   const [getRemote, setRemote] = useLocalRefJson(key_remote(id), { ver: 0, val: "{\"r\":{\"c\":[{\"c\":[],\"i\":0,\"t\":\"p\"}],\"t\":\"r\"}}" });
@@ -158,6 +163,7 @@ export default function ({ token, highlight, setItemRef, id, onUpdate, onDelete,
 
   function setContent(content) {
     setValue(getFormat() ? ' ' + content : content);
+    db.setItem(id, getHiddenList(content));
   }
 
   function onFocus(focused) {
