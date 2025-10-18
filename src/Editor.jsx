@@ -152,6 +152,10 @@ const State = ({ setEditorRef, getHighlight, setFocus, setCanUndo, setCanRedo })
   });
 
   useEffect(() => {
+    return () => setFocus(false);
+  }, []);
+
+  useEffect(() => {
     setCanUndo(false);
     setCanRedo(false);
 
