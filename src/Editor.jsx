@@ -1,5 +1,8 @@
 import { useEffect, useRef, useState } from "react";
-import { $getSelection, $selectAll, $isRangeSelection, $createRangeSelection, $setSelection, $getRoot, $createParagraphNode, $isParagraphNode, $createTabNode, $addUpdateTag, HISTORIC_TAG, TextNode, createCommand, COMMAND_PRIORITY_LOW, FOCUS_COMMAND, BLUR_COMMAND, SELECTION_CHANGE_COMMAND, UNDO_COMMAND, REDO_COMMAND, CAN_UNDO_COMMAND, CAN_REDO_COMMAND, PASTE_COMMAND } from 'lexical';
+import { $getRoot, $getSelection, $isRangeSelection, $createRangeSelection, $setSelection, $selectAll } from 'lexical';
+import { $isParagraphNode, $createParagraphNode, $createTextNode, TextNode } from 'lexical';
+import { $addUpdateTag, HISTORIC_TAG } from 'lexical';
+import { createCommand, COMMAND_PRIORITY_LOW, FOCUS_COMMAND, BLUR_COMMAND, SELECTION_CHANGE_COMMAND, KEY_TAB_COMMAND, PASTE_COMMAND, UNDO_COMMAND, REDO_COMMAND, CAN_UNDO_COMMAND, CAN_REDO_COMMAND } from 'lexical';
 import { mergeRegister, objectKlassEquals } from '@lexical/utils';
 import { $generateNodesFromSerializedNodes } from '@lexical/clipboard';
 import { LexicalComposer } from '@lexical/react/LexicalComposer';
@@ -9,7 +12,6 @@ import { RichTextPlugin } from '@lexical/react/LexicalRichTextPlugin';
 import { ContentEditable } from '@lexical/react/LexicalContentEditable';
 import { OnChangePlugin } from '@lexical/react/LexicalOnChangePlugin';
 import { HistoryPlugin } from '@lexical/react/LexicalHistoryPlugin';
-import { TabIndentationPlugin } from '@lexical/react/LexicalTabIndentationPlugin';
 import { useRefGetSet } from './utility/refGetSet';
 import Text from './lang/Text';
 import Button from './widget/Button';
@@ -33,12 +35,12 @@ const Content = (() => {
     return str.replace(new RegExp(Object.keys(map).join('|'), 'g'), matched => map[matched]);
   }
 
-  const removeKeys = ['detail', 'format', 'mode', 'style', 'direction', 'version', 'textFormat', 'textStyle'];
-  const replacementMap = { '\"root\"\:': '\"r\"\:', '\"children\"\:': '\"c\"\:', '\"text\"\:': '\"x\"\:', '\"indent\"\:': '\"i\"\:', '\"type\"\:\"root\"': '\"t\"\:\"r\"', '\"type\"\:\"paragraph\"': '\"t\"\:\"p\"', '\"type\"\:\"text\"': '\"t\"\:\"x\"', '\"type\"\:\"hidden\"': '\"t\"\:\"h\"' };
+  const keys = ['', 'root', 'children', 'type', 'text'];
+  const replacementMap = { '\"root\"\:': '\"r\"\:', '\"children\"\:': '\"c\"\:', '\"text\"\:': '\"x\"\:', '\"type\"\:\"root\"': '\"t\"\:\"r\"', '\"type\"\:\"paragraph\"': '\"t\"\:\"p\"', '\"type\"\:\"text\"': '\"t\"\:\"x\"', '\"type\"\:\"hidden\"': '\"t\"\:\"h\"' };
   const inverseReplacementMap = inverseObjectMap(replacementMap);
 
   return {
-    stringify: content => replaceWithMap(JSON.stringify(content, (key, value) => removeKeys.includes(key) ? undefined : value), replacementMap),
+    stringify: content => replaceWithMap(JSON.stringify(content, (key, value) => keys.includes(key) || !isNaN(key) ? value : undefined), replacementMap),
     parse: content => replaceWithMap(content, inverseReplacementMap),
   }
 })();
@@ -56,7 +58,6 @@ export default function Editor({ readonly, setEditorRef, getHighlight, getConten
       <State setEditorRef={setEditorRef} getHighlight={getHighlight} setFocus={setFocus} setCanUndo={setCanUndo} setCanRedo={setCanRedo} />
       <OnChangePlugin ignoreSelectionChange ignoreHistoryMergeTagChange onChange={(editorState, _, tags) => { if (!tags.has(TAG_NO_HISTORY)) { setContent(Content.stringify(editorState.toJSON())); } }} />
       <HistoryPlugin delay={500} />
-      <TabIndentationPlugin />
     </LexicalComposer>
   )
 }
@@ -225,9 +226,10 @@ const State = ({ setEditorRef, getHighlight, setFocus, setCanUndo, setCanRedo })
             return false;
           }
 
-          const node = window.getSelection()?.anchorNode;
-          if (node && node.parentElement) {
-            const rect = (node.nodeType === Node.ELEMENT_NODE ? node : node.parentElement).getBoundingClientRect();
+          const range = window.getSelection()?.getRangeAt(0);
+          if (range) {
+            const node = range.startContainer.nodeType === Node.ELEMENT_NODE ? range.startContainer : range.startContainer.parentElement;
+            const rect = range.getClientRects().length > 0 ? range.getBoundingClientRect() : node.getBoundingClientRect();
             if (rect.top > window.innerHeight * 3 / 4) {
               window.scrollTo({ top: window.scrollY + rect.top - window.innerHeight / 2, behavior: "smooth", });
             } else if (rect.top < 50) {
@@ -294,6 +296,20 @@ const State = ({ setEditorRef, getHighlight, setFocus, setCanUndo, setCanRedo })
       }),
 
       editor.registerCommand(
+        KEY_TAB_COMMAND,
+        (event) => {
+          event.preventDefault();
+          const selection = $getSelection();
+          if (!$isRangeSelection(selection)) {
+            return true;
+          }
+          selection.insertNodes([$createTextNode('\t')]);
+          return true;
+        },
+        COMMAND_PRIORITY_LOW,
+      ),
+
+      editor.registerCommand(
         PASTE_COMMAND,
         (event) => {
           if (!objectKlassEquals(event, ClipboardEvent)) {
@@ -323,7 +339,26 @@ const State = ({ setEditorRef, getHighlight, setFocus, setCanUndo, setCanRedo })
             }
             const text = dataTransfer.getData('text/plain') || dataTransfer.getData('text/uri-list');
             if (text) {
-              selection.insertRawText(text);
+              const nodes = [];
+              let currParagraph = null;
+              text.split(/(\r?\n)/).forEach(part => {
+                if (part === '\n' || part === '\r\n') {
+                  if (currParagraph) {
+                    nodes.push(currParagraph);
+                  }
+                  currParagraph = $createParagraphNode();
+                } else {
+                  if (currParagraph) {
+                    currParagraph.append($createTextNode(part));
+                  } else {
+                    nodes.push($createTextNode(part));
+                  }
+                }
+              });
+              if (currParagraph) {
+                nodes.push(...currParagraph.getChildren());
+              }
+              selection.insertNodes(nodes);
             }
           }, {
             tag: 'paste'
