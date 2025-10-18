@@ -28,9 +28,8 @@ self.addEventListener('periodicsync', event => {
             return;
         }
         if (event.tag === 'reminder') {
-            const list = (await db.getAllUnion()).slice(0, 5).join(' ');
-            await self.registration.showNotification('Daily Reminder', {
-                body: list ? 'Time to review: ' + list : '',
+            await self.registration.showNotification('Time to review', {
+                body: (await db.getAllUnion()).slice(0, 7).join(', '),
                 tag: 'reminder'
             });
         }

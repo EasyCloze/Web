@@ -11,6 +11,8 @@ function current_lang() {
 export default function ({ children }) {
   const [lang, setLang] = useLocalState('lang');
 
+  // todo: language and dictionary visible to service worker
+
   return (
     <LanguageContext.Provider value={{
       lang,
