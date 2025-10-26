@@ -1,5 +1,4 @@
 import { useEffect, useState } from 'react';
-import { useLocalRef } from '../utility/localRef';
 import Text from '../lang/Text';
 import Message from '../widget/Message';
 import Setting from './Setting';
@@ -10,8 +9,7 @@ import Password from './Password';
 import Delete from './Delete';
 import './Dialog.css';
 
-export default function ({ setDialogRef, token, setToken }) {
-  const [getUser, setUser] = useLocalRef('user');
+export default function ({ setDialogRef }) {
   const [dialog, setDialog] = useState(null);
   const [error, setError] = useState(null);
 
@@ -21,26 +19,26 @@ export default function ({ setDialogRef, token, setToken }) {
     setError(null);
   }, [dialog]);
 
-  function current_dialog() {
+  function currentDialog() {
     switch (dialog) {
       case 'setting':
-        return <Setting setError={setError} token={token} setToken={setToken} user={getUser()} setDialog={setDialog} />
+        return <Setting setError={setError} setDialog={setDialog} />
       case 'about':
         return <About />
       case 'signup':
         return <Signup setError={setError} setDialog={setDialog} />
       case 'login':
-        return <Login setError={setError} setUser={setUser} setToken={setToken} setDialog={setDialog} />
+        return <Login setError={setError} setDialog={setDialog} />
       case 'password':
-        return <Password setError={setError} token={token} setToken={setToken} user={getUser()} setDialog={setDialog} />
+        return <Password setError={setError} setDialog={setDialog} />
       case 'delete':
-        return <Delete setError={setError} token={token} setToken={setToken} setDialog={setDialog} />
+        return <Delete setError={setError} setDialog={setDialog} />
       default:
         return null;
     }
   }
 
-  let children = current_dialog();
+  let children = currentDialog();
   if (!children) {
     return null;
   }

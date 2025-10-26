@@ -12,7 +12,9 @@ import { RichTextPlugin } from '@lexical/react/LexicalRichTextPlugin';
 import { ContentEditable } from '@lexical/react/LexicalContentEditable';
 import { OnChangePlugin } from '@lexical/react/LexicalOnChangePlugin';
 import { HistoryPlugin } from '@lexical/react/LexicalHistoryPlugin';
-import { useRefGetSet } from './utility/refGetSet';
+import { useRefGetSet } from './common/refGetSet';
+import { useMetaState } from "./data/metaState";
+import { emptyContent, stringifyContent, parseContent } from "./data/editor";
 import Text from './lang/Text';
 import Button from './widget/Button';
 import Placeholder from './widget/Placeholder';
@@ -22,31 +24,8 @@ import './Editor.css';
 const TAG_NO_HISTORY = HISTORIC_TAG;
 const TOOLBAR_COMMAND = createCommand();
 
-const Content = (() => {
-  function inverseObjectMap(obj) {
-    let result = {};
-    for (const [k, v] of Object.entries(obj)) {
-      result[v] = k;
-    }
-    return result;
-  }
-
-  function replaceWithMap(str, map) {
-    return str.replace(new RegExp(Object.keys(map).join('|'), 'g'), matched => map[matched]);
-  }
-
-  const keys = ['', 'root', 'children', 'type', 'text'];
-  const replacementMap = { '\"root\"\:': '\"r\"\:', '\"children\"\:': '\"c\"\:', '\"text\"\:': '\"x\"\:', '\"type\"\:\"root\"': '\"t\"\:\"r\"', '\"type\"\:\"paragraph\"': '\"t\"\:\"p\"', '\"type\"\:\"text\"': '\"t\"\:\"x\"', '\"type\"\:\"hidden\"': '\"t\"\:\"h\"' };
-  const inverseReplacementMap = inverseObjectMap(replacementMap);
-
-  return {
-    stringify: content => replaceWithMap(JSON.stringify(content, (key, value) => keys.includes(key) || !isNaN(key) ? value : undefined), replacementMap),
-    parse: content => replaceWithMap(content, inverseReplacementMap),
-  }
-})();
-
-export default function Editor({ readonly, setEditorRef, getHighlight, getContent, setContent, setFocus, setCanUndo, setCanRedo }) {
-  let editorState = Content.parse(getContent());
+export default function Editor({ readonly, initialContent, setEditorRef, getItemRef }) {
+  const editorState = parseContent(initialContent || emptyContent);
   return readonly ? (
     <LexicalComposer initialConfig={{ namespace: 'EasyCloze', editable: !readonly, editorState, theme: {}, nodes: [HiddenNode], onError(error) { throw error } }} >
       <PlainTextPlugin contentEditable={<ContentEditable style={{ outline: 'none' }} />} />
@@ -55,8 +34,8 @@ export default function Editor({ readonly, setEditorRef, getHighlight, getConten
   ) : (
     <LexicalComposer initialConfig={{ namespace: 'EasyCloze', editable: !readonly, editorState, theme: {}, nodes: [HiddenNode], onError(error) { throw error } }} >
       <RichTextPlugin contentEditable={<ContentEditable style={{ outline: 'none' }} inputMode='none' />} />
-      <State setEditorRef={setEditorRef} getHighlight={getHighlight} setFocus={setFocus} setCanUndo={setCanUndo} setCanRedo={setCanRedo} />
-      <OnChangePlugin ignoreSelectionChange ignoreHistoryMergeTagChange onChange={(editorState, _, tags) => { if (!tags.has(TAG_NO_HISTORY)) { setContent(Content.stringify(editorState.toJSON())); } }} />
+      <State editorState={editorState} setEditorRef={setEditorRef} getItemRef={getItemRef} />
+      <OnChangePlugin ignoreSelectionChange ignoreHistoryMergeTagChange onChange={(editorState, editor, tags) => { if (!tags.has(TAG_NO_HISTORY)) { getItemRef().setContent(stringifyContent({ ...editorState.toJSON(), meta: editor.meta ?? {} })); } }} />
       <HistoryPlugin delay={500} />
     </LexicalComposer>
   )
@@ -79,7 +58,8 @@ class HiddenNode extends TextNode {
   }
 
   setMark(mark) {
-    super.getWritable().mark = mark;
+    this.getWritable().mark = mark;
+    return this;
   }
 
   createDOM(config, editor) {
@@ -116,49 +96,52 @@ const ReadonlyState = ({ editorState }) => {
   const [editor] = useLexicalComposerContext();
   useEffect(() => {
     if (editor) {
-      editor.setEditorState(editor.parseEditorState(editorState));
+      const parsedEditorState = JSON.parse(editorState);
+      editor.meta = parsedEditorState.meta;
+      editor.setEditorState(editor.parseEditorState(parsedEditorState));
+      editor.getRootElement().dataset.highlight = editor.meta.highlight;
     }
   }, [editor, editorState]);
 }
 
-const State = ({ setEditorRef, getHighlight, setFocus, setCanUndo, setCanRedo }) => {
+const State = ({ editorState, setEditorRef, getItemRef }) => {
   const [editor] = useLexicalComposerContext();
   const [getToolbarRef, setToolbarRef] = useRefGetSet();
   const [getToolbarPos, setToolbarPos] = useRefGetSet();
+
+  function undo() { editor.dispatchCommand(UNDO_COMMAND); }
+  function redo() { editor.dispatchCommand(REDO_COMMAND); }
 
   function setToolbarState(state) {
     setToolbarPos(editor.mouse);
     getToolbarRef().setState(state);
   }
 
-  function undo() { editor.dispatchCommand(UNDO_COMMAND); }
-  function redo() { editor.dispatchCommand(REDO_COMMAND); }
-
-  setEditorRef({
-    setHighlight: highlight => getToolbarRef().setHighlight(highlight),
-    focus: () => editor.focus(undefined, { defaultSelection: 'rootStart' }),
-    edit: () => editor.getRootElement().inputMode = 'text',
-    setContent: content => {
-      editor.update(() => {
-        editor.setEditorState(editor.parseEditorState(Content.parse(content)));
-      });
-    },
-    selectAll: () => {
-      editor.mouse = undefined;
-      editor.update(() => $selectAll());
-    },
-    redo,
-    undo,
-  });
+  useEffect(() => {
+    setEditorRef({
+      setHighlight: highlight => getToolbarRef().setHighlight(highlight),
+      focus: () => editor.focus(undefined, { defaultSelection: 'rootStart' }),
+      edit: () => editor.getRootElement().inputMode = 'text',
+      setContent: content => editor.update(() => editor.setEditorState(editor.parseEditorState(parseContent(content)))),
+      selectAll: () => { editor.mouse = undefined; editor.update(() => $selectAll()); },
+      redo,
+      undo,
+    });
+  }, [editor]);
 
   useEffect(() => {
-    return () => setFocus(false);
+    if (editor) {
+      const parsedEditorState = JSON.parse(editorState);
+      editor.meta = parsedEditorState.meta;
+      editor.getRootElement().dataset.highlight = editor.meta?.highlight;
+    }
+  }, [editor, editorState]);
+
+  useEffect(() => {
+    return () => getItemRef().setFocused(false);
   }, []);
 
   useEffect(() => {
-    setCanUndo(false);
-    setCanRedo(false);
-
     const root = editor.getRootElement();
     root.onpointerdown =
       root.onpointermove = event => { editor.mouse = { x: event.clientX, y: event.clientY }; }
@@ -173,7 +156,7 @@ const State = ({ setEditorRef, getHighlight, setFocus, setCanUndo, setCanRedo })
       }
     }
 
-    function editor_trim() {
+    function normalize() {
       editor.update(() => {
         $addUpdateTag(TAG_NO_HISTORY);
         const root = $getRoot();
@@ -189,13 +172,14 @@ const State = ({ setEditorRef, getHighlight, setFocus, setCanUndo, setCanRedo })
       });
     }
 
-    editor_trim();
+    normalize();
 
     return mergeRegister(
       editor.registerCommand(
         FOCUS_COMMAND,
         () => {
-          setFocus(true);
+          getItemRef().setFocused(true);
+          getToolbarRef().setFocused(true);
           if (!editor.mouse && editor.prevSelection) {
             editor.update(() => {
               $setSelection(editor.prevSelection);
@@ -209,10 +193,11 @@ const State = ({ setEditorRef, getHighlight, setFocus, setCanUndo, setCanRedo })
       editor.registerCommand(
         BLUR_COMMAND,
         () => {
-          setFocus(false);
+          getItemRef().setFocused(false);
+          getToolbarRef().setFocused(false);
           root.inputMode = 'none';
           editor.mouse = undefined;
-          editor_trim();
+          normalize();
           editor.update(() => {
             editor.prevSelection = $getSelection();
             $setSelection(null);
@@ -375,7 +360,7 @@ const State = ({ setEditorRef, getHighlight, setFocus, setCanUndo, setCanRedo })
       editor.registerCommand(
         CAN_UNDO_COMMAND,
         (canUndo) => {
-          setCanUndo(canUndo);
+          getItemRef().setCanUndo(canUndo);
           return false;
         },
         COMMAND_PRIORITY_LOW,
@@ -384,7 +369,7 @@ const State = ({ setEditorRef, getHighlight, setFocus, setCanUndo, setCanRedo })
       editor.registerCommand(
         CAN_REDO_COMMAND,
         (canRedo) => {
-          setCanRedo(canRedo);
+          getItemRef().setCanRedo(canRedo);
           return false;
         },
         COMMAND_PRIORITY_LOW,
@@ -402,12 +387,12 @@ const State = ({ setEditorRef, getHighlight, setFocus, setCanUndo, setCanRedo })
             let content = selection.getTextContent();
             let node = new HiddenNode(content, undefined, mark);
             selection.insertNodes([node]);
-            let new_selection = $createRangeSelection();
-            new_selection.setTextNodeRange(node, 0, node, content.length);
-            $setSelection(new_selection);
+            let newSelection = $createRangeSelection();
+            newSelection.setTextNodeRange(node, 0, node, content.length);
+            $setSelection(newSelection);
           }
 
-          const mark_all = () => {
+          const markAll = () => {
             nodes.forEach(node => {
               if (node instanceof HiddenNode) {
                 node.setMark(true);
@@ -415,7 +400,7 @@ const State = ({ setEditorRef, getHighlight, setFocus, setCanUndo, setCanRedo })
             });
           }
 
-          const unmark_all = () => {
+          const unmarkAll = () => {
             nodes.forEach(node => {
               if (node instanceof HiddenNode) {
                 node.setMark(false);
@@ -423,7 +408,7 @@ const State = ({ setEditorRef, getHighlight, setFocus, setCanUndo, setCanRedo })
             });
           }
 
-          const show_all = () => {
+          const showAll = () => {
             if (selection.isCollapsed()) {
               let node = nodes[0];
               let content = node.getTextContent();
@@ -440,9 +425,9 @@ const State = ({ setEditorRef, getHighlight, setFocus, setCanUndo, setCanRedo })
                 next.remove();
               }
               node = node.replace(new TextNode(content));
-              let new_selection = $createRangeSelection();
-              new_selection.setTextNodeRange(node, begin, node, end);
-              $setSelection(new_selection);
+              let newSelection = $createRangeSelection();
+              newSelection.setTextNodeRange(node, begin, node, end);
+              $setSelection(newSelection);
             } else {
               nodes.forEach(node => {
                 if (node instanceof HiddenNode) {
@@ -455,9 +440,9 @@ const State = ({ setEditorRef, getHighlight, setFocus, setCanUndo, setCanRedo })
           ({
             hide: () => hide(false),
             mark: () => hide(true),
-            mark_all,
-            unmark_all,
-            show_all
+            markAll,
+            unmarkAll,
+            showAll
           })[name]();
 
           return true;
@@ -468,34 +453,54 @@ const State = ({ setEditorRef, getHighlight, setFocus, setCanUndo, setCanRedo })
   }, []);
 
   return (
-    <Toolbar getHighlight={getHighlight} setToolbarRef={setToolbarRef} getToolbarPos={getToolbarPos} command={name => () => editor.dispatchCommand(TOOLBAR_COMMAND, name)} />
+    <Toolbar setToolbarRef={setToolbarRef} getToolbarPos={getToolbarPos} command={name => () => editor.dispatchCommand(TOOLBAR_COMMAND, name)} />
   )
 }
 
-const Toolbar = ({ getHighlight, setToolbarRef, getToolbarPos, command }) => {
-  const ref = useRef();
+const Toolbar = ({ setToolbarRef, getToolbarPos, command }) => {
+  const [editor] = useLexicalComposerContext();
+  const [focused, setFocused] = useState(false);
   const [state, setState] = useState({ show: false });
-  const [highlight, setHighlight] = useState(getHighlight());
+  const [highlight, setHighlight] = useMetaState('highlight', true);
+  const ref = useRef();
 
   setToolbarRef({
+    setFocused,
     setState,
-    setHighlight
   });
+
+  useEffect(() => {
+    if (focused) {
+      setHighlight(editor.meta?.highlight ?? highlight);
+    }
+  }, [focused]);
+
+  useEffect(() => {
+    if (focused) {
+      if (editor.meta?.highlight !== highlight) {
+        editor.update(() => {
+          (editor.meta ??= {}).highlight = highlight;
+          editor.getRootElement().dataset.highlight = highlight;
+          $getRoot().markDirty();
+        });
+      }
+    }
+  }, [highlight]);
 
   useEffect(() => {
     if (!ref.current) {
       return;
     }
     const rect = ref.current.getBoundingClientRect();
-    const body_rect = document.body.getBoundingClientRect();
-    const parent_rect = ref.current.offsetParent.getBoundingClientRect();
+    const bodyRect = document.body.getBoundingClientRect();
+    const parentRect = ref.current.offsetParent.getBoundingClientRect();
     const pos = getToolbarPos();
     if (pos) {
-      ref.current.style.left = Math.max(0, Math.min(pos.x - 10 - body_rect.left, body_rect.width - rect.width - 10)) - (parent_rect.left - body_rect.left) + 'px';
-      ref.current.style.top = Math.max(0, Math.min(pos.y + 20 - body_rect.top, body_rect.height - rect.height - 10)) - (parent_rect.top - body_rect.top) + 'px';
+      ref.current.style.left = Math.max(0, Math.min(pos.x - 10 - bodyRect.left, bodyRect.width - rect.width - 10)) - (parentRect.left - bodyRect.left) + 'px';
+      ref.current.style.top = Math.max(0, Math.min(pos.y + 20 - bodyRect.top, bodyRect.height - rect.height - 10)) - (parentRect.top - bodyRect.top) + 'px';
     } else {
       ref.current.style.left = '10px';
-      ref.current.style.top = parent_rect.height - 7 + 'px';
+      ref.current.style.top = parentRect.height - 7 + 'px';
     }
     ref.current.style.visibility = 'visible';
   });
@@ -513,7 +518,7 @@ const Toolbar = ({ getHighlight, setToolbarRef, getToolbarPos, command }) => {
             state.plain ? (
               <Button onClick={command('hide')} ><Text id='item.editor.highlight.button' /></Button>
             ) : (
-              <Button onClick={command('show_all')} ><Text id='item.editor.unhighlight.button' /></Button>
+              <Button onClick={command('showAll')} ><Text id='item.editor.unhighlight.button' /></Button>
             )
           ) : (
             state.plain ? (
@@ -524,23 +529,23 @@ const Toolbar = ({ getHighlight, setToolbarRef, getToolbarPos, command }) => {
               </>
             ) : state.single ? (
               <>
-                <Button onClick={command('show_all')} ><Text id='item.editor.show.button' /></Button>
+                <Button onClick={command('showAll')} ><Text id='item.editor.show.button' /></Button>
                 <Placeholder width='2px' />
                 {
                   !state.mark ? (
-                    <Button onClick={command('mark_all')} ><Text id='item.editor.mark.button' /></Button>
+                    <Button onClick={command('markAll')} ><Text id='item.editor.mark.button' /></Button>
                   ) : (
-                    <Button onClick={command('unmark_all')} ><Text id='item.editor.unmark.button' /></Button>
+                    <Button onClick={command('unmarkAll')} ><Text id='item.editor.unmark.button' /></Button>
                   )
                 }
               </>
             ) : (
               <>
-                <Button onClick={command('show_all')} ><Text id='item.editor.show.button' /></Button>
+                <Button onClick={command('showAll')} ><Text id='item.editor.show.button' /></Button>
                 <Placeholder width='2px' />
-                <Button onClick={command('mark_all')} ><Text id='item.editor.mark.button' /></Button>
+                <Button onClick={command('markAll')} ><Text id='item.editor.mark.button' /></Button>
                 <Placeholder width='2px' />
-                <Button onClick={command('unmark_all')} ><Text id='item.editor.unmark.button' /></Button>
+                <Button onClick={command('unmarkAll')} ><Text id='item.editor.unmark.button' /></Button>
               </>
             )
           )

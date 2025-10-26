@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect } from 'react';
 import AppBar from '@mui/material/AppBar';
 import Toolbar from '@mui/material/Toolbar';
 import Tooltip from '@mui/material/Tooltip';
@@ -7,8 +7,9 @@ import SettingsIcon from '@mui/icons-material/Settings';
 import SyncIcon from '@mui/icons-material/Sync';
 import CircularProgress from '@mui/material/CircularProgress';
 import { Slide, useScrollTrigger } from '@mui/material';
-import { useLocalStateJson } from './utility/localState';
-import { useRefGetSet } from './utility/refGetSet';
+import { useRefGetSet } from './common/refGetSet';
+import { useMetaState, useReadOnlyMetaState } from './data/metaState';
+import { useSessionState, useReadOnlySessionState } from './data/sessionState';
 import Text from './lang/Text';
 import IconButton from './widget/IconButton';
 import Button from './widget/Button';
@@ -16,48 +17,73 @@ import Placeholder from './widget/Placeholder';
 import Dialog from './dialog/Dialog';
 import './Menu.css';
 
-export default function ({ token, setToken, setMenuRef, getListRef }) {
+export default function () {
+  const loggedIn = useReadOnlyMetaState('loggedIn', false);
   const scrollTrigger = useScrollTrigger({ threshold: 30 });
-  const [highlight, setHighlight] = useLocalStateJson('highlight', false);
-  const [time, setTime] = useLocalStateJson('lastSyncTime');
-  const [next, setNext] = useState(0);
-  const [online, setOnline] = useLocalStateJson('online');
-  const [syncing, setSyncing] = useState(false);
   const [getDialogRef, setDialogRef] = useRefGetSet();
-
-  setMenuRef({
-    time,
-    setHighlight,
-    setSyncing,
-    setNext,
-    onSync: time => { time ? (setTime(time), setOnline(true)) : setOnline(null) },
-  });
-
-  useEffect(() => {
-    getListRef().setHighlight(highlight);
-  }, [highlight]);
-
-  useEffect(() => {
-    if (!token) {
-      setTime(null);
-      setOnline(null);
-      setSyncing(false);
-    }
-  }, [token]);
 
   useEffect(() => {
     function handleCtrlS(event) {
       if (event.ctrlKey && event.code === 'KeyS') {
         event.preventDefault();
-        if (token) {
+        if (loggedIn) {
           window.scrollTo({ top: 0, behavior: 'instant' });
-          getListRef().sync();
+          setNextSyncTime(Date.now());
         }
       }
     }
     document.addEventListener('keydown', handleCtrlS);
     return () => document.removeEventListener('keydown', handleCtrlS);
-  }, [token]);
+  }, [loggedIn]);
+
+  const HighlightSwitch = () => {
+    const [highlight, setHighlight] = useMetaState('highlight', false);
+    return (
+      <Tooltip title={<Text id={highlight ? 'menu.highlightMode.tooltip' : 'menu.hideMode.tooltip'} />}>
+        <Switch checked={highlight} onMouseDown={event => event.preventDefault()} onClick={() => setHighlight(!highlight)}></Switch>
+      </Tooltip>
+    )
+  }
+
+  const OnlineIcon = () => {
+    const online = useReadOnlyMetaState('online', false);
+    return (
+      <Tooltip title={<Text id={online ? 'menu.online.tooltip' : 'menu.offline.tooltip'} />}>
+        <div style={{ backgroundColor: online ? 'mediumseagreen' : 'lightcoral', borderRadius: '50%', width: '15px', height: '15px' }}></div>
+      </Tooltip>
+    )
+  }
+
+  const LastSyncTimeText = () => {
+    const lastSyncTime = useReadOnlyMetaState('lastSyncTime', 0);
+    return (
+      <Tooltip title={<Text id='menu.lastSyncTime.tooltip' />}>
+        <span>{lastSyncTime ? new Date(lastSyncTime).toLocaleString() : <Text id='menu.neverSynced.text' />}</span>
+      </Tooltip>
+    )
+  }
+
+  const SyncButton = () => {
+    const syncing = useReadOnlySessionState('syncing', false);
+    const [nextSyncTime, setNextSyncTime] = useSessionState('nextSyncTime', Date.now());
+    return (
+      syncing ?
+        <CircularProgress size='20px' style={{ padding: '10px' }} /> :
+        <IconButton
+          icon={<SyncIcon />}
+          title={
+            <div style={{ textAlign: 'center' }}>
+              <Text id='menu.sync.tooltip' />
+              <br />
+              <div style={{ fontStyle: 'italic', paddingTop: '5px' }}>
+                <Text id='menu.sync.next.tooltip' /> {new Date(nextSyncTime).toLocaleString()}
+              </div>
+            </div>
+          }
+          onClick={() => setNextSyncTime(Date.now())}
+        />
+    )
+  }
 
   return (
     <>
@@ -66,13 +92,11 @@ export default function ({ token, setToken, setMenuRef, getListRef }) {
           <Toolbar variant='dense' className='menu'>
             <div>
               <IconButton icon={<SettingsIcon />} title={<Text id='menu.setting.tooltip' />} onClick={() => getDialogRef().setDialog('setting')} />
-              <Tooltip title={<Text id={highlight ? 'menu.highlight_mode.tooltip' : 'menu.hide_mode.tooltip'} />}>
-                <Switch checked={highlight} onMouseDown={event => event.preventDefault()} onClick={() => setHighlight(!highlight)}></Switch>
-              </Tooltip>
+              <HighlightSwitch />
             </div>
             <div style={{ display: 'flex', flexDirection: 'row', alignItems: 'center' }}>
               {
-                !token ? (
+                !loggedIn ? (
                   <>
                     <Button onClick={() => getDialogRef().setDialog('signup')} ><Text id='menu.signup.button' /></Button>
                     <Placeholder width='5px' />
@@ -80,37 +104,11 @@ export default function ({ token, setToken, setMenuRef, getListRef }) {
                   </>
                 ) : (
                   <>
-                    <Tooltip title={<Text id={online ? 'menu.online.tooltip' : 'menu.offline.tooltip'} />}>
-                      <div style={{ backgroundColor: online ? 'mediumseagreen' : 'lightcoral', borderRadius: '50%', width: '15px', height: '15px' }}></div>
-                    </Tooltip>
+                    <OnlineIcon />
                     <Placeholder width='10px' />
-                    <Tooltip title={<Text id='menu.last_sync_time.tooltip' />}>
-                      <span>{time ? new Date(time).toLocaleString() : <Text id='menu.never_synced.text' />}</span>
-                    </Tooltip>
+                    <LastSyncTimeText />
                     <Placeholder width='5px' />
-                    {
-                      syncing ?
-                        <CircularProgress size='20px' style={{ padding: '10px' }} /> :
-                        <IconButton
-                          icon={<SyncIcon />}
-                          title={
-                            <div style={{ textAlign: 'center' }}>
-                              <Text id='menu.sync.tooltip' />
-                              {
-                                next ? (
-                                  <>
-                                    <br />
-                                    <div style={{ fontStyle: 'italic', paddingTop: '5px' }}>
-                                      *<Text id='menu.sync.next.tooltip' /> {new Date(next).toLocaleString()}
-                                    </div>
-                                  </>
-                                ) : ('')
-                              }
-                            </div>
-                          }
-                          onClick={() => getListRef().sync()}
-                        />
-                    }
+                    <SyncButton />
                   </>
                 )
               }
@@ -118,7 +116,7 @@ export default function ({ token, setToken, setMenuRef, getListRef }) {
           </Toolbar>
         </AppBar>
       </Slide>
-      <Dialog setDialogRef={setDialogRef} token={token} setToken={setToken} />
+      <Dialog setDialogRef={setDialogRef} />
     </>
   )
 }

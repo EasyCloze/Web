@@ -1,8 +1,8 @@
 import { useContext } from 'react';
-import Label from '../widget/Label';
-import Text from './Text';
-import LanguageContext from './context';
+import { LanguageContext } from './Context';
 import dict from './dict';
+import Text from './Text';
+import Label from '../widget/Label';
 
 export default function () {
   const { lang, setLang } = useContext(LanguageContext);

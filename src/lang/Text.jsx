@@ -1,5 +1,5 @@
 import { useContext } from "react";
-import LanguageContext from './context';
+import { LanguageContext } from './Context';
 
 export default function ({ id }) {
   const { dict } = useContext(LanguageContext);

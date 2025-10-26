@@ -1,5 +1,5 @@
-import { hash } from '../utility/hash';
-import API from '../utility/api';
+import { hash } from '../common/hash';
+import { api } from '../common/api';
 import Text from '../lang/Text';
 import Label from '../widget/Label';
 import Input from '../widget/Input';
@@ -12,19 +12,19 @@ export default function ({ setError, setDialog }) {
       event.preventDefault();
       const user = event.target.user.value, pass = event.target.pass.value;
       if (user.length < 6 || user.length > 30) {
-        setError('dialog.error.invalid_username.message');
+        setError('dialog.error.invalidUsername.message');
         return;
       }
       setError(null);
       try {
-        const response = await fetch(API('/user/signup'), {
+        const response = await fetch(api('/user/signup'), {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ user, pass: hash(user, pass) }),
         });
         if (response.status !== 200) {
           switch (response.status) {
-            case 409: setError('dialog.error.unavailable_username.message'); break;
+            case 409: setError('dialog.error.unavailableUsername.message'); break;
             case 429: setError('dialog.error.limit.signup.message'); break;
             default: throw new Error();
           }

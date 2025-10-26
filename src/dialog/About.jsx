@@ -1,4 +1,4 @@
-import { VER } from '../utility/env';
+import { VER } from '../common/env';
 import Placeholder from '../widget/Placeholder';
 
 export default function () {

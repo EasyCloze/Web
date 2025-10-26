@@ -1,32 +1,33 @@
-import { useEffect } from 'react';
-import { useLocalState } from './utility/localState';
-import { useRefGetSet } from './utility/refGetSet';
+import { useState } from 'react';
+import { useCloseNotification } from './common/closeNotification';
+import { useLock } from './common/lock';
 import LanguageProvider from './lang/Provider';
+import Text from './lang/Text';
+import { useSyncControll } from './data/syncControll';
 import Menu from './Menu';
 import List from './List';
 
 export default function () {
-  const [token, setToken] = useLocalState('token');
-  const [getMenuRef, setMenuRef] = useRefGetSet();
-  const [getListRef, setListRef] = useRefGetSet();
+  useCloseNotification();
+  const hasLock = useLock('SingleTabIndexedDBAccess');
 
-  useEffect(() => {
-    async function closeNotification() {
-      if (document.visibilityState === "visible") {
-        const registration = await navigator.serviceWorker.ready;
-        const notifications = await registration.getNotifications();
-        notifications.forEach(n => n.close());
-      }
-    }
-    closeNotification();
-    document.addEventListener('visibilitychange', closeNotification);
-    return () => document.removeEventListener('visibilitychange', closeNotification);
-  }, []);
+  const SyncControll = () => {
+    const [error, setError] = useState(null);
+    useSyncControll(setError);
+    return error && <Text id='error' />;
+  }
 
   return (
     <LanguageProvider>
-      <Menu token={token} setToken={setToken} setMenuRef={setMenuRef} getListRef={getListRef} />
-      <List token={token} setToken={setToken} getMenuRef={getMenuRef} setListRef={setListRef} />
+      {
+        hasLock ? (
+          <>
+            <SyncControll />
+            <Menu />
+            <List />
+          </>
+        ) : <Text id='app.singleTab.text' />
+      }
     </LanguageProvider>
   )
 }
