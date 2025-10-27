@@ -24,20 +24,27 @@ import PositionFixed from './widget/PositionFixed';
 import Editor from './Editor';
 import './Item.css';
 
-export default React.memo(function ({ id }) {
+export default React.memo(function ({ id, itemMap }) {
   const initialItem = getInitialItem(id);
   const initialContent = initialItem.val || initialItem.remoteVal;
   const [getFrameRef, setFrameRef] = useRefGetSet();
   const [getEditorRef, setEditorRef] = useRefGetSet();
 
+  useEffect(() => {
+    if (initialContent === null) {
+      getEditorRef().focus();
+      getEditorRef().edit();
+    }
+  }, []);
+
   return (
-    <Frame id={id} initialContent={initialContent} setFrameRef={setFrameRef} getEditorRef={getEditorRef} >
+    <Frame id={id} itemMap={itemMap} initialContent={initialContent} setFrameRef={setFrameRef} getEditorRef={getEditorRef} >
       <Editor initialContent={initialContent} setEditorRef={setEditorRef} getItemRef={getFrameRef} />
     </Frame>
   )
 })
 
-const Frame = ({ id, initialContent, setFrameRef, getEditorRef, children }) => {
+const Frame = ({ id, itemMap, initialContent, setFrameRef, getEditorRef, children }) => {
   const loggedIn = useReadOnlyMetaState('loggedIn', false);
   const [item, setItem] = useItemState(id);
   const [focused, setFocused] = useState(false);
@@ -47,6 +54,13 @@ const Frame = ({ id, initialContent, setFrameRef, getEditorRef, children }) => {
 
   const state = itemState(item, loggedIn);
   const content = item.val || item.remoteVal;
+
+  useEffect(() => {
+    itemMap.setItem(id, {
+      focus: () => getEditorRef() ? (getEditorRef().focus(), true) : false
+    });
+    return () => itemMap.deleteItem(id);
+  }, []);
 
   useEffect(() => {
     if (content !== getEditorContent()) {
@@ -76,10 +90,11 @@ const Frame = ({ id, initialContent, setFrameRef, getEditorRef, children }) => {
 
   function onDelete() {
     updateItem({ ver: -item.ver });
+    itemMap.focusNext(id);
   }
 
   function onRestore() {
-    onDelete();
+    updateItem({ ver: -item.ver });
   }
 
   function onConflictDelete() {

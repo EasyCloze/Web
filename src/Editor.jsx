@@ -137,13 +137,14 @@ const State = ({ setEditorRef, getItemRef }) => {
   useEffect(() => {
     setEditorRef({
       setHighlight: highlight => getToolbarRef().setHighlight(highlight),
-      focus: () => editor.focus(undefined, { defaultSelection: 'rootStart' }),
+      focus: () => { editor.focus(undefined, { defaultSelection: 'rootStart' }); editor.dispatchCommand(FOCUS_COMMAND, null); },
       edit: () => editor.getRootElement().inputMode = 'text',
       setContent: content => editor.update(() => setEditorContent(editor, content)),
       selectAll: () => { editor.mouse = undefined; editor.update(() => $selectAll()); },
       redo,
       undo,
     });
+    return () => setEditorRef(null);
   }, [editor]);
 
   useEffect(() => {
