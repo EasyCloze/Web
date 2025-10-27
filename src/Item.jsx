@@ -1,10 +1,10 @@
-import { useEffect, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import DeleteIcon from '@mui/icons-material/Delete';
-import RestoreIcon from '@mui/icons-material/Restore';
-import UndoIcon from '@mui/icons-material/Undo';
-import RedoIcon from '@mui/icons-material/Redo';
 import ArchiveIcon from '@mui/icons-material/Archive';
 import UnarchiveIcon from '@mui/icons-material/Unarchive';
+import UndoIcon from '@mui/icons-material/Undo';
+import RedoIcon from '@mui/icons-material/Redo';
+import RestoreIcon from '@mui/icons-material/Restore';
 import { useReadOnlyMetaState } from './data/metaState';
 import { generateLocalId, generateArchiveId, currentVersion, getVersionDate } from './data/id';
 import { ItemState, itemState } from './data/item';
@@ -24,7 +24,7 @@ import PositionFixed from './widget/PositionFixed';
 import Editor from './Editor';
 import './Item.css';
 
-export default function ({ id }) {
+export default React.memo(function ({ id }) {
   const initialItem = getInitialItem(id);
   const initialContent = initialItem.val || initialItem.remoteVal;
   const [getFrameRef, setFrameRef] = useRefGetSet();
@@ -35,7 +35,7 @@ export default function ({ id }) {
       <Editor initialContent={initialContent} setEditorRef={setEditorRef} getItemRef={getFrameRef} />
     </Frame>
   )
-}
+})
 
 const Frame = ({ id, initialContent, setFrameRef, getEditorRef, children }) => {
   const loggedIn = useReadOnlyMetaState('loggedIn', false);
@@ -71,9 +71,7 @@ const Frame = ({ id, initialContent, setFrameRef, getEditorRef, children }) => {
   }
 
   function onRevert() {
-    if (item.val !== null) {
-      updateItem({ ref: item.remoteVer, ver: item.remoteVer, val: null });
-    }
+    updateItem({ ref: item.remoteVer, ver: item.remoteVer, val: null });
   }
 
   function onDelete() {
@@ -178,7 +176,7 @@ const Frame = ({ id, initialContent, setFrameRef, getEditorRef, children }) => {
       case ItemState.DeletedNormal:
       case ItemState.DeletedCreated:
       case ItemState.DeletedUpdated:
-        return <div style={{ display: 'none' }}>{children}</div>;
+        return null;
       case ItemState.ConflictDeleted:
       case ItemState.ConflictUpdated:
         return (
@@ -254,8 +252,8 @@ const Frame = ({ id, initialContent, setFrameRef, getEditorRef, children }) => {
             <IconButton icon={<UndoIcon />} disabled={!canUndo} title={<Text id='item.command.undo.tooltip' />} onClick={() => getEditorRef().undo()} />
             <IconButton icon={<RedoIcon />} disabled={!canRedo} title={<Text id='item.command.redo.tooltip' />} onClick={() => getEditorRef().redo()} />
             {
-              state !== ItemState.Archived &&
-              <IconButton icon={<RestoreIcon />} disabled={state === ItemState.Normal} title={<Text id='item.command.revert.tooltip' />} onClick={onRevert} />
+              (state === ItemState.Updated || state === ItemState.UpdatedInvalid) &&
+              <IconButton icon={<RestoreIcon />} title={<Text id='item.command.revert.tooltip' />} onClick={onRevert} />
             }
           </>
         )

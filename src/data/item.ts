@@ -145,33 +145,37 @@ export function itemMerge(item: Item, tempVal: string | null, remote: ItemSyncRe
   if (remote === null) {
     if (isPositive(ver)) {
       if (ver === 0) {
-        return item;
+        return item;  // CreatedEmpty unsynced
       } else {
         if (val !== null) {
           if (remoteVer === 0) {
-            return item;
+            return item;  // unsynced 
           } else {
-            return { id: generateLocalId(ver), remoteVer: 0, remoteVal: null, ref, ver, val };
+            return { id: generateLocalId(ver), remoteVer: 0, remoteVal: null, ref, ver, val };  // Updated missing
           }
         } else {
-          return null;
+          return null;  // Normal deleted
         }
       }
     } else {
-      return null;
+      return null;  // deleted
     }
   } else {
     if (remote.newId !== undefined) {
-      return normalizeItem({ id: remote.newId, remoteVer: remote.ver, remoteVal: tempVal, ref: remote.ver, ver, val });
+      return normalizeItem({ id: remote.newId, remoteVer: remote.ver, remoteVal: tempVal, ref: remote.ver, ver, val });  // Created synced
     } else {
       if (ref !== remote.ver) {
         if (remote.val === undefined) {
-          return normalizeItem({ id, remoteVer: remote.ver, remoteVal: tempVal, ref: remote.ver, ver, val });
+          return normalizeItem({ id, remoteVer: remote.ver, remoteVal: tempVal, ref: remote.ver, ver, val });  // Updated synced
         } else {
-          return normalizeItem({ id, remoteVer: remote.ver, remoteVal: remote.val, ref, ver, val });
+          if (isPositive(ver) && val === null) {
+            return { id, remoteVer: remote.ver, remoteVal: remote.val, ref: remote.ver, ver: remote.ver, val };  // Normal updated
+          } else {
+            return normalizeItem({ id, remoteVer: remote.ver, remoteVal: remote.val, ref, ver, val });  // Updated conflicting
+          }
         }
       } else {
-        return item;
+        return item;  // Normal unchanged
       }
     }
   }

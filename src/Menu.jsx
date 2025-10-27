@@ -1,12 +1,13 @@
 import { useEffect } from 'react';
+import Slide from '@mui/material/Slide';
+import useScrollTrigger from '@mui/material/useScrollTrigger';
 import AppBar from '@mui/material/AppBar';
 import Toolbar from '@mui/material/Toolbar';
 import Tooltip from '@mui/material/Tooltip';
 import Switch from '@mui/material/Switch';
+import CircularProgress from '@mui/material/CircularProgress';
 import SettingsIcon from '@mui/icons-material/Settings';
 import SyncIcon from '@mui/icons-material/Sync';
-import CircularProgress from '@mui/material/CircularProgress';
-import { Slide, useScrollTrigger } from '@mui/material';
 import { useRefGetSet } from './common/refGetSet';
 import { useMetaState, useReadOnlyMetaState } from './data/metaState';
 import { useSessionState, useReadOnlySessionState } from './data/sessionState';

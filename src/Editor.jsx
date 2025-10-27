@@ -24,19 +24,41 @@ import './Editor.css';
 const TAG_NO_HISTORY = HISTORIC_TAG;
 const TOOLBAR_COMMAND = createCommand();
 
-export default function Editor({ readonly, initialContent, setEditorRef, getItemRef }) {
-  const editorState = parseContent(initialContent || emptyContent);
-  return readonly ? (
-    <LexicalComposer initialConfig={{ namespace: 'EasyCloze', editable: !readonly, editorState, theme: {}, nodes: [HiddenNode], onError(error) { throw error } }} >
-      <PlainTextPlugin contentEditable={<ContentEditable style={{ outline: 'none' }} />} />
-      <ReadonlyState editorState={editorState} />
-    </LexicalComposer>
-  ) : (
-    <LexicalComposer initialConfig={{ namespace: 'EasyCloze', editable: !readonly, editorState, theme: {}, nodes: [HiddenNode], onError(error) { throw error } }} >
-      <RichTextPlugin contentEditable={<ContentEditable style={{ outline: 'none' }} inputMode='none' />} />
-      <State editorState={editorState} setEditorRef={setEditorRef} getItemRef={getItemRef} />
-      <OnChangePlugin ignoreSelectionChange ignoreHistoryMergeTagChange onChange={(editorState, editor, tags) => { if (!tags.has(TAG_NO_HISTORY)) { getItemRef().setContent(stringifyContent({ ...editorState.toJSON(), meta: editor.meta ?? {} })); } }} />
-      <HistoryPlugin delay={500} />
+function getEditorContent(editorState, editor) {
+  return stringifyContent({ ...editorState.toJSON(), meta: editor.meta });
+}
+
+function setEditorContent(editor, content) {
+  const parsedEditorState = JSON.parse(parseContent(content || emptyContent));
+  editor.setEditorState(editor.parseEditorState(parsedEditorState));
+  editor.meta = parsedEditorState.meta;
+}
+
+export default function ({ readonly, initialContent, setEditorRef, getItemRef }) {
+  return (
+    <LexicalComposer initialConfig={{
+      namespace: 'EasyCloze',
+      editable: !readonly,
+      editorState: editor => setEditorContent(editor, initialContent),
+      theme: {},
+      nodes: [HiddenNode],
+      onError(error) { throw error }
+    }} >
+      {
+        readonly ? (
+          <>
+            <PlainTextPlugin contentEditable={<ContentEditable style={{ outline: 'none' }} />} />
+            <ReadonlyState initialContent={initialContent} />
+          </>
+        ) : (
+          <>
+            <RichTextPlugin contentEditable={<ContentEditable style={{ outline: 'none' }} inputMode='none' />} />
+            <State setEditorRef={setEditorRef} getItemRef={getItemRef} />
+            <OnChangePlugin ignoreSelectionChange ignoreHistoryMergeTagChange onChange={(editorState, editor, tags) => { if (!tags.has(TAG_NO_HISTORY)) { getItemRef().setContent(getEditorContent(editorState, editor)); } }} />
+            <HistoryPlugin delay={500} />
+          </>
+        )
+      }
     </LexicalComposer>
   )
 }
@@ -92,19 +114,14 @@ class HiddenNode extends TextNode {
   }
 }
 
-const ReadonlyState = ({ editorState }) => {
+const ReadonlyState = ({ initialContent }) => {
   const [editor] = useLexicalComposerContext();
   useEffect(() => {
-    if (editor) {
-      const parsedEditorState = JSON.parse(editorState);
-      editor.meta = parsedEditorState.meta;
-      editor.setEditorState(editor.parseEditorState(parsedEditorState));
-      editor.getRootElement().dataset.highlight = editor.meta.highlight;
-    }
-  }, [editor, editorState]);
+    editor.update(() => setEditorContent(editor, initialContent));
+  }, [editor, initialContent]);
 }
 
-const State = ({ editorState, setEditorRef, getItemRef }) => {
+const State = ({ setEditorRef, getItemRef }) => {
   const [editor] = useLexicalComposerContext();
   const [getToolbarRef, setToolbarRef] = useRefGetSet();
   const [getToolbarPos, setToolbarPos] = useRefGetSet();
@@ -122,20 +139,12 @@ const State = ({ editorState, setEditorRef, getItemRef }) => {
       setHighlight: highlight => getToolbarRef().setHighlight(highlight),
       focus: () => editor.focus(undefined, { defaultSelection: 'rootStart' }),
       edit: () => editor.getRootElement().inputMode = 'text',
-      setContent: content => editor.update(() => editor.setEditorState(editor.parseEditorState(parseContent(content)))),
+      setContent: content => editor.update(() => setEditorContent(editor, content)),
       selectAll: () => { editor.mouse = undefined; editor.update(() => $selectAll()); },
       redo,
       undo,
     });
   }, [editor]);
-
-  useEffect(() => {
-    if (editor) {
-      const parsedEditorState = JSON.parse(editorState);
-      editor.meta = parsedEditorState.meta;
-      editor.getRootElement().dataset.highlight = editor.meta?.highlight;
-    }
-  }, [editor, editorState]);
 
   useEffect(() => {
     return () => getItemRef().setFocused(false);
@@ -246,6 +255,10 @@ const State = ({ editorState, setEditorRef, getItemRef }) => {
         },
         COMMAND_PRIORITY_LOW,
       ),
+
+      editor.registerUpdateListener(() => {
+        root.dataset.highlight = editor.meta.highlight;
+      }),
 
       editor.registerUpdateListener(({ editorState }) => {
         editorState.read(() => {
@@ -469,20 +482,27 @@ const Toolbar = ({ setToolbarRef, getToolbarPos, command }) => {
     setState,
   });
 
+  function editorUpdateHighlight(highlight) {
+    editor.update(() => {
+      editor.meta.highlight = highlight;
+      $getRoot().markDirty();
+    });
+  }
+
   useEffect(() => {
     if (focused) {
-      setHighlight(editor.meta?.highlight ?? highlight);
+      if (editor.meta.highlight === undefined) {
+        editorUpdateHighlight(highlight);
+      } else {
+        setHighlight(editor.meta.highlight);
+      }
     }
   }, [focused]);
 
   useEffect(() => {
     if (focused) {
-      if (editor.meta?.highlight !== highlight) {
-        editor.update(() => {
-          (editor.meta ??= {}).highlight = highlight;
-          editor.getRootElement().dataset.highlight = highlight;
-          $getRoot().markDirty();
-        });
+      if (editor.meta.highlight !== highlight) {
+        editorUpdateHighlight(highlight);
       }
     }
   }, [highlight]);

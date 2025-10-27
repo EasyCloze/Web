@@ -11,7 +11,7 @@ function replaceWithMap(str: string, map: Record<string, string>) {
   return str.replace(new RegExp(Object.keys(map).join('|'), 'g'), matched => map[matched]);
 }
 
-export const emptyContent = '{"r":{"c":[{"c":[],"t":"p"}],"t":"r"}}';
+export const emptyContent = '{"r":{"c":[{"c":[],"t":"p"}],"t":"r"},"m":{}}';
 
 export function stringifyContent(content: object) {
   return replaceWithMap(JSON.stringify(content, (key, value) => keys.includes(key) || !isNaN(Number(key)) ? value : undefined), replacementMap);
