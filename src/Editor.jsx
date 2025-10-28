@@ -34,12 +34,12 @@ function setEditorContent(editor, content) {
   editor.meta = parsedEditorState.meta;
 }
 
-export default function ({ readonly, initialContent, setEditorRef, getItemRef }) {
+export default function ({ readonly, setEditorRef, getItemRef }) {
   return (
     <LexicalComposer initialConfig={{
       namespace: 'EasyCloze',
       editable: !readonly,
-      editorState: editor => setEditorContent(editor, initialContent),
+      editorState: editor => setEditorContent(editor, getItemRef().getContent()),
       theme: {},
       nodes: [HiddenNode],
       onError(error) { throw error }
@@ -124,7 +124,7 @@ const ReadonlyState = ({ initialContent }) => {
 const State = ({ setEditorRef, getItemRef }) => {
   const [editor] = useLexicalComposerContext();
   const [getToolbarRef, setToolbarRef] = useRefGetSet();
-  const [getToolbarPos, setToolbarPos] = useRefGetSet();
+  const [getToolbarPos, setToolbarPos] = useRefGetSet(undefined);
 
   function undo() { editor.dispatchCommand(UNDO_COMMAND); }
   function redo() { editor.dispatchCommand(REDO_COMMAND); }
@@ -165,6 +165,12 @@ const State = ({ setEditorRef, getItemRef }) => {
         event.preventDefault();
       }
     }
+
+    function updateRootHighlight() {
+      root.dataset.highlight = editor.meta.highlight;
+    }
+
+    updateRootHighlight();
 
     function normalize() {
       editor.update(() => {
@@ -258,7 +264,7 @@ const State = ({ setEditorRef, getItemRef }) => {
       ),
 
       editor.registerUpdateListener(() => {
-        root.dataset.highlight = editor.meta.highlight;
+        updateRootHighlight();
       }),
 
       editor.registerUpdateListener(({ editorState }) => {

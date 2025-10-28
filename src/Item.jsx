@@ -27,8 +27,8 @@ import './Item.css';
 export default React.memo(function ({ id, itemMap }) {
   const initialItem = getInitialItem(id);
   const initialContent = initialItem.val || initialItem.remoteVal;
-  const [getFrameRef, setFrameRef] = useRefGetSet();
-  const [getEditorRef, setEditorRef] = useRefGetSet();
+  const [getItemRef, setItemRef] = useRefGetSet();
+  const [getEditorRef, setEditorRef] = useRefGetSet(null);
 
   useEffect(() => {
     if (initialContent === null) {
@@ -38,13 +38,13 @@ export default React.memo(function ({ id, itemMap }) {
   }, []);
 
   return (
-    <Frame id={id} itemMap={itemMap} initialContent={initialContent} setFrameRef={setFrameRef} getEditorRef={getEditorRef} >
-      <Editor initialContent={initialContent} setEditorRef={setEditorRef} getItemRef={getFrameRef} />
+    <Frame id={id} itemMap={itemMap} initialContent={initialContent} setItemRef={setItemRef} getEditorRef={getEditorRef} >
+      <Editor setEditorRef={setEditorRef} getItemRef={getItemRef} />
     </Frame>
   )
 })
 
-const Frame = ({ id, itemMap, initialContent, setFrameRef, getEditorRef, children }) => {
+const Frame = ({ id, itemMap, initialContent, setItemRef, getEditorRef, children }) => {
   const loggedIn = useReadOnlyMetaState('loggedIn', false);
   const [item, setItem] = useItemState(id);
   const [focused, setFocused] = useState(false);
@@ -73,6 +73,10 @@ const Frame = ({ id, itemMap, initialContent, setFrameRef, getEditorRef, childre
     onItemUpdate();
   }
 
+  function getContent() {
+    return content;
+  }
+
   function setContent(newContent) {
     setEditorContent(newContent);
     if (newContent !== content) {
@@ -83,6 +87,14 @@ const Frame = ({ id, itemMap, initialContent, setFrameRef, getEditorRef, childre
       }
     }
   }
+
+  setItemRef({
+    getContent,
+    setContent,
+    setFocused,
+    setCanRedo,
+    setCanUndo,
+  });
 
   function onRevert() {
     updateItem({ ref: item.remoteVer, ver: item.remoteVer, val: null });
@@ -118,13 +130,6 @@ const Frame = ({ id, itemMap, initialContent, setFrameRef, getEditorRef, childre
     addItem({ id: generateLocalId(), remoteVer: 0, remoteVal: null, ref: 0, ver: item.ver, val: content });
     onDelete();
   };
-
-  setFrameRef({
-    setContent,
-    setFocused,
-    setCanRedo,
-    setCanUndo,
-  });
 
   const borderColor = (() => {
     if (focused) {
