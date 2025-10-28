@@ -5,6 +5,7 @@ import { idleSyncInterval, minSyncInterval, updateDelayInterval, localRefresh, s
 import { itemCache, getList, updateList } from "./itemCache";
 import { asArraySorted } from "./list";
 import { logOut } from "./user";
+import { serviceWorkerCheckRegisterBackgroundSync } from "./serviceWorker";
 
 export function onItemUpdate() {
   setSession('nextSyncTime', Date.now() + updateDelayInterval);
@@ -51,4 +52,8 @@ export function useSyncControll(setError: (msg: string | null) => void) {
     const timeout = setTimeout(() => checkSync(setError), nextSyncTime - Date.now());
     return () => clearTimeout(timeout);
   }, [nextSyncTime]);
+
+  useEffect(() => {
+    serviceWorkerCheckRegisterBackgroundSync();
+  }, []);
 }

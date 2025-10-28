@@ -1,4 +1,4 @@
-import { checkSyncingTag, finishSyncingTag, backgroundSyncTag, periodicSyncTag, periodicSyncNotificationTag } from './data/serviceWorker';
+import { checkSyncingTag, finishSyncingTag, checkRegisterBackgroundSyncTag, backgroundSyncTag, periodicSyncTag, periodicSyncNotificationTag } from './data/serviceWorker';
 import { dbGetMeta, dbSetMeta } from './data/metaCache';
 import { dbGetList, dbUpdateList } from './data/itemCache';
 import { minSyncInterval, sync } from './data/sync';
@@ -20,15 +20,24 @@ function getClientList() {
   return clients.matchAll({ type: 'window', includeUncontrolled: true });
 }
 
-async function registerBackgroundSync() {
+async function registerBackgroundSync(tag) {
   if (!self.registration.sync) {
-    return;
+    return false;
   }
-  if ((await self.registration.sync.getTags()).includes(backgroundSyncTag)) {
-    return;
+  if ((await self.registration.sync.getTags()).includes(tag)) {
+    return false;
+  } else {
+    await self.registration.sync.register(tag);
+    return true;
   }
-  await self.registration.sync.register(backgroundSyncTag);
 }
+
+const backgroundSyncTagIndexMax = 2;
+let backgroundSyncTagIndex = 0;
+
+function currentBackgroundSyncTag() { return backgroundSyncTag + backgroundSyncTagIndex; }
+function performCheckSync() { return backgroundSyncTagIndex === 0; }
+function nextBackgroundSyncTag() { backgroundSyncTagIndex = backgroundSyncTagIndex >= backgroundSyncTagIndexMax ? 0 : backgroundSyncTagIndex + 1; return currentBackgroundSyncTag(); }
 
 let syncing = false;
 
@@ -36,10 +45,17 @@ self.addEventListener('message', (event) => {
   if (event.data.tag === checkSyncingTag) {
     event.ports[0].postMessage({ syncing });
   }
+  if (event.data.tag === checkRegisterBackgroundSyncTag) {
+    event.waitUntil((async () => {
+      if ((await self.registration.sync.getTags()).length === 0) {
+        registerBackgroundSync(currentBackgroundSyncTag());
+      }
+    })());
+  }
 });
 
 self.addEventListener('activate', event => {
-  event.waitUntil(registerBackgroundSync());
+  event.waitUntil(registerBackgroundSync(currentBackgroundSyncTag()));
 });
 
 async function checkSync() {
@@ -70,10 +86,16 @@ async function checkSync() {
 }
 
 self.addEventListener('sync', event => {
-  if (event.tag === backgroundSyncTag) {
+  if (event.tag === currentBackgroundSyncTag()) {
     event.waitUntil((async () => {
-      await checkSync();
-      throw new Error("refire background sync"); // using exception to schedule next sync
+      if (event.lastChance) {
+        if (performCheckSync()) {
+          await checkSync();
+        }
+        await registerBackgroundSync(nextBackgroundSyncTag());
+      } else {
+        throw new Error("refire background sync");  // using exception to schedule next sync
+      }
     })());
   }
 });

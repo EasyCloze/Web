@@ -1,5 +1,6 @@
 export const checkSyncingTag = 'syncing';
 export const finishSyncingTag = 'finished';
+export const checkRegisterBackgroundSyncTag = 'checkSync';
 export const backgroundSyncTag = 'sync';
 export const periodicSyncTag = 'reminder';
 export const periodicSyncNotificationTag = periodicSyncTag;
@@ -26,4 +27,8 @@ export async function serviceWorkerSync(): Promise<void> {
       navigator.serviceWorker.controller.postMessage({ tag: checkSyncingTag }, [messageChannel.port2]);
     }
   });
+}
+
+export function serviceWorkerCheckRegisterBackgroundSync() {
+  navigator.serviceWorker.controller?.postMessage({ tag: checkRegisterBackgroundSyncTag });
 }
