@@ -125,7 +125,7 @@ self.addEventListener('periodicsync', event => {
       }
       await checkSync();
       await self.registration.showNotification(dict[currLang]['serviceWorker.notification.text'], {
-        body: (await dbGetList()).map(item => getListOfHidden(item.val || item.remoteVal)).flat().slice(0, listOfHiddenLimit).join(', '),
+        body: Array.from(new Set((await dbGetList()).map(item => getListOfHidden(item.val || item.remoteVal)).flat())).slice(0, listOfHiddenLimit).join(', '),
         tag: periodicSyncNotificationTag
       });
     }
