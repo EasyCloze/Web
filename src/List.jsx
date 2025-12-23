@@ -55,9 +55,12 @@ export default function () {
         {
           list.slice(0, archiveIndex).map((id) => <Item key={id} id={id} itemMap={itemMap} />)
         }
-        <Tooltip title={overlength && <Text id='list.length.tooltip' />}>
-          <div id='list-length' className={overlength && 'overlength'}>- {<Text id='list.length.text' />} {archiveIndex} -</div>
-        </Tooltip>
+        {
+          archiveIndex > 0 &&
+          <Tooltip title={overlength && <Text id='list.length.tooltip' />}>
+            <div id='list-length' className={overlength && 'overlength'}>- {<Text id='list.length.text' />} {archiveIndex} -</div>
+          </Tooltip>
+        }
         {
           archiveIndex < list.length &&
           <div className='archive' >
