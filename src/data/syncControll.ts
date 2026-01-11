@@ -33,6 +33,7 @@ async function checkSync(setError: (msg: string | null) => void) {
       await updateList(...await sync((await getOrFetchMeta('token'))!, asArraySorted(list), (id: string) => itemCache.get(id)!));
       setError(null);
       setMeta('online', true);
+      setMeta('lastSyncTime', Date.now());
     } catch (error) {
       switch (error) {
         case 404: logOut(); break;
@@ -40,7 +41,6 @@ async function checkSync(setError: (msg: string | null) => void) {
         default: setMeta('online', false); break;
       }
     }
-    setMeta('lastSyncTime', Date.now());
   }
   setSession('syncing', false);
 }
