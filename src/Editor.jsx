@@ -34,12 +34,12 @@ function setEditorContent(editor, content) {
   editor.meta = parsedEditorState.meta;
 }
 
-export default function ({ readonly, setEditorRef, getItemRef }) {
+export default function ({ readonly, initialContent, setEditorRef, getItemRef }) {
   return (
     <LexicalComposer initialConfig={{
       namespace: 'EasyCloze',
       editable: !readonly,
-      editorState: editor => setEditorContent(editor, getItemRef().getContent()),
+      editorState: readonly ? undefined : editor => setEditorContent(editor, getItemRef().getContent()),
       theme: {},
       nodes: [HiddenNode],
       onError(error) { throw error }
@@ -118,6 +118,7 @@ const ReadonlyState = ({ initialContent }) => {
   const [editor] = useLexicalComposerContext();
   useEffect(() => {
     editor.update(() => setEditorContent(editor, initialContent));
+    editor.getRootElement().dataset.highlight = editor.meta.highlight;
   }, [editor, initialContent]);
 }
 
