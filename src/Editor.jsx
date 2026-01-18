@@ -114,11 +114,28 @@ class HiddenNode extends TextNode {
   }
 }
 
+function normalizeEditor(editor) {
+  editor.update(() => {
+    $addUpdateTag(TAG_NO_HISTORY);
+    const root = $getRoot();
+    let children = root.getChildren();
+    while (children.length > 1 && $isParagraphNode(children.at(0)) && children.at(0).getTextContent().trim() === '') {
+      children.at(0).remove();
+      children = root.getChildren();
+    }
+    while (children.length > 1 && $isParagraphNode(children.at(-1)) && children.at(-1).getTextContent().trim() === '') {
+      children.at(-1).remove();
+      children = root.getChildren();
+    }
+  });
+}
+
 const ReadonlyState = ({ initialContent }) => {
   const [editor] = useLexicalComposerContext();
   useEffect(() => {
     editor.update(() => setEditorContent(editor, initialContent));
     editor.getRootElement().dataset.highlight = editor.meta.highlight;
+    normalizeEditor(editor);
   }, [editor, initialContent]);
 }
 
@@ -137,11 +154,24 @@ const State = ({ setEditorRef, getItemRef }) => {
 
   useEffect(() => {
     setEditorRef({
-      setHighlight: highlight => getToolbarRef().setHighlight(highlight),
-      focus: () => { editor.focus(undefined, { defaultSelection: 'rootStart' }); editor.dispatchCommand(FOCUS_COMMAND, null); },
-      edit: () => editor.getRootElement().inputMode = 'text',
-      setContent: content => editor.update(() => setEditorContent(editor, content)),
-      selectAll: () => { editor.mouse = undefined; editor.update(() => $selectAll()); },
+      setHighlight: highlight => {
+        getToolbarRef().setHighlight(highlight)
+      },
+      focus: () => {
+        editor.focus(undefined, { defaultSelection: 'rootStart' });
+        editor.dispatchCommand(FOCUS_COMMAND, null);
+      },
+      edit: () => {
+        editor.getRootElement().inputMode = 'text'
+      },
+      setContent: content => {
+        editor.update(() => setEditorContent(editor, content));
+        normalizeEditor(editor);
+      },
+      selectAll: () => {
+        editor.mouse = undefined;
+        editor.update(() => $selectAll());
+      },
       redo,
       undo,
     });
@@ -173,23 +203,7 @@ const State = ({ setEditorRef, getItemRef }) => {
 
     updateRootHighlight();
 
-    function normalize() {
-      editor.update(() => {
-        $addUpdateTag(TAG_NO_HISTORY);
-        const root = $getRoot();
-        let children = root.getChildren();
-        while (children.length > 1 && $isParagraphNode(children.at(0)) && children.at(0).getTextContent().trim() === '') {
-          children.at(0).remove();
-          children = root.getChildren();
-        }
-        while (children.length > 1 && $isParagraphNode(children.at(-1)) && children.at(-1).getTextContent().trim() === '') {
-          children.at(-1).remove();
-          children = root.getChildren();
-        }
-      });
-    }
-
-    normalize();
+    normalizeEditor(editor);
 
     return mergeRegister(
       editor.registerCommand(
@@ -214,7 +228,7 @@ const State = ({ setEditorRef, getItemRef }) => {
           getToolbarRef().setFocused(false);
           root.inputMode = 'none';
           editor.mouse = undefined;
-          normalize();
+          normalizeEditor(editor);
           editor.update(() => {
             editor.prevSelection = $getSelection();
             $setSelection(null);
