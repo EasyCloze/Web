@@ -123,10 +123,6 @@ function normalizeEditor(editor) {
       children.at(0).remove();
       children = root.getChildren();
     }
-    while (children.length > 1 && $isParagraphNode(children.at(-1)) && children.at(-1).getTextContent().trim() === '') {
-      children.at(-1).remove();
-      children = root.getChildren();
-    }
   });
 }
 
