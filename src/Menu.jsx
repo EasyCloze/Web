@@ -20,6 +20,7 @@ import './Menu.css';
 
 export default function () {
   const loggedIn = useReadOnlyMetaState('loggedIn', false);
+  const [nextSyncTime, setNextSyncTime] = useSessionState('nextSyncTime', Date.now());
   const scrollTrigger = useScrollTrigger({ threshold: 30 });
   const [getDialogRef, setDialogRef] = useRefGetSet();
 
@@ -66,7 +67,6 @@ export default function () {
 
   const SyncButton = () => {
     const syncing = useReadOnlySessionState('syncing', false);
-    const [nextSyncTime, setNextSyncTime] = useSessionState('nextSyncTime', Date.now());
     return (
       syncing ?
         <CircularProgress size='20px' style={{ padding: '10px' }} /> :
