@@ -21,7 +21,7 @@ export function parseContent(str: string) {
   return replaceWithMap(str, reverseReplacementMap);
 }
 
-export const listOfHiddenLimit = 7;
+export const listOfHiddenLimit = 20;
 
 export function getListOfHidden(str: string): string[] {
   return [...str.matchAll(/"x":"(.*?)"/g)].filter(m => /"t":"h"/.test(str.slice(m.index, str.indexOf('}', m.index)))).map(m => m[1]);
