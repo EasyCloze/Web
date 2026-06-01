@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import { ErrorBoundary } from 'react-error-boundary';
 import DeleteIcon from '@mui/icons-material/Delete';
 import ArchiveIcon from '@mui/icons-material/Archive';
 import UnarchiveIcon from '@mui/icons-material/Unarchive';
@@ -22,6 +23,7 @@ import PositionRelative from './widget/PositionRelative';
 import PositionSticky from './widget/PositionSticky';
 import PositionFixed from './widget/PositionFixed';
 import Editor from './Editor';
+import EditorFallback from './EditorFallback';
 import './Item.css';
 
 export default React.memo(function ({ id, itemMap }) {
@@ -39,7 +41,9 @@ export default React.memo(function ({ id, itemMap }) {
 
   return (
     <Frame id={id} itemMap={itemMap} initialContent={initialContent} setItemRef={setItemRef} getEditorRef={getEditorRef} >
-      <Editor setEditorRef={setEditorRef} getItemRef={getItemRef} />
+      <ErrorBoundary fallbackRender={() => <EditorFallback setEditorRef={setEditorRef} getItemRef={getItemRef} />}>
+        <Editor setEditorRef={setEditorRef} getItemRef={getItemRef} />
+      </ErrorBoundary>
     </Frame>
   )
 })
